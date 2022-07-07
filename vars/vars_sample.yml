@@ -1,0 +1,25 @@
+---
+# EC2 Variables
+
+name: "{{ username }}"
+aws_access_key: ""
+aws_secret_key: ""
+aws_instance_type: "<< Insert desired Instance Type >>"
+aws_region: "<< Insert desired AWS region >>"
+aws_security_group: "<< Insert previously created Security Group >>" 
+aws_ami_owner: "<< Insert AWS account ID >>"
+aws_key_name: "<< Insert previously created SSH key >>"
+image: "<< Insert desired AMI name (optional) >>" 
+vpc: "<< Insert previously created VPC >>"
+vpc_subnet_id: "<< Insert previously created Subnet(s) >>"
+aws_instance_initiated_shutdown_behavior: "terminate"
+aws_instances_count: 1
+instance_version: "{{ version }}"
+app_name: "<< Insert desired Application/Instance name >>"
+environment: "<< Insert desired Environment Type >>"
+
+# Slack Variables
+
+channel: '<< Insert desired Slack channel >>'
+icon_emoji: ':<< Insert desired Slack emoji >>:'
+slack_user: '<< Insert desired Slack user >>'
