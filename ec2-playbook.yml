@@ -11,7 +11,7 @@
       region: "{{ aws_region }}" 
       owner: "{{ aws_ami_owner }}"
       filters:
-        "tag:Name": "{{ instance_version }}"
+        name: "{{ ami_name }}"
     register: findami
   - name: Register results as an usable variable
     set_fact:
@@ -29,7 +29,7 @@
       instance_type: "{{ aws_instance_type }}"                                                                                                                                                                                                                                                                             
       image: "{{ instance_ami.image_id }}"                                                                                                                                                                                                                                                                                
       instance_tags:
-          Name: "{{ project_name }}-{{ instance_version }}-{{ username }}"
+          Name: "{{ project_name }}-{{ ami_name }}-{{ username }}"
           Environment: "{{ environment }}"
           Application: "{{ app_name }}"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               
       wait: yes                                                                                                                                                                                                                                                                           
