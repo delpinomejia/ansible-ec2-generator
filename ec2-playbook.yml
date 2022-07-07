@@ -1,0 +1,66 @@
+---
+- name: Create Instance in AWS
+  hosts: localhost
+  connection: local
+  vars_files:
+  - vars/vars.yml
+
+  tasks:                                                                                                                                      
+  - name: Find the right AMI
+    ec2_ami_facts:
+      region: "{{ aws_region }}" 
+      owner: "{{ aws_ami_owner }}"
+      filters:
+        "tag:Name": "{{ instance_version }}"
+    register: ami
+  - name: Register results as an usable variable
+    set_fact:
+      instance_ami: "{{ ami.images | selectattr('name', 'defined') | sort(attribute='creation_date') | last }}"
+  - name: Get the image_id
+    debug:
+       var: instance_ami.image_id
+  - name: Create an EC2 instance                                                                                                                                                                                                                                                                             
+    ec2:
+      state: present
+      aws_access_key: ""                                                                                                                                                                                                                                                                               
+      aws_secret_key: ""
+      region: "{{ aws_region }}"                                                                                                                                                                                                                                     
+      key_name: "{{ aws_key_name }}"                                                                           
+      instance_type: "{{ aws_instance_type }}"                                                                                                                                                                                                                                                                             
+      image: "{{ erp_ami.image_id }}"                                                                                                                                                                                                                                                                                
+      instance_tags:
+          Name: "{{ project_name }}-{{ instance_version }}-{{ username }}"
+          Environment: "{{ environment }}"
+          Application: "{{ app_name }}"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               
+      wait: yes                                                                                                                                                                                                                                                                           
+      count_tag:                                                                                                                                                                                                                                                                                                           
+          Application: "{{ app_name }}"                                                                                                                                                                                                                                                                          
+      group: "{{ aws_security_group }}"                                                                                                                                                                                                                                                                                    
+      vpc_subnet_id: "{{ vpc_subnet_id }}"                                                                                                                                                                                                                                                            
+      instance_initiated_shutdown_behavior: "{{ aws_instance_initiated_shutdown_behavior }}" 
+    with_random_choice:
+        - 01
+        - 02
+        - 03
+        - 04
+        - 05
+        - 06
+        - 07                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              
+    register: ec2_instances
+    tags:
+      - always
+
+  - set_fact:
+      private_ip: "{{ item.instances.0.private_ip }}"
+    with_items: 
+      - "{{ ec2_instances.results }}"
+      
+  - debug: msg="{{ private_ip }}"
+
+  - name: Send notification message via Slack
+    slack:
+      token: "{{ slack_token }}}}"
+      msg: "Hello, {{ username }}! \n You just requested a fresh {{ instance_version }} instance with IP `{{ private_ip }}` \n Your username is {{ default_user }} and your password is {{ password }} \n Please allow 3 to 5 minutes for the instance to fully initialize \n Have fun, and use the resources responsibly"
+      icon_emoji: "{{ icon_emoji }}"
+      channel: "{{ channel }}"
+      username: "{{ slack_user }}"
