@@ -12,10 +12,10 @@
       owner: "{{ aws_ami_owner }}"
       filters:
         "tag:Name": "{{ instance_version }}"
-    register: ami
+    register: findami
   - name: Register results as an usable variable
     set_fact:
-      instance_ami: "{{ ami.images | selectattr('name', 'defined') | sort(attribute='creation_date') | last }}"
+      instance_ami: "{{ findami.images | sort(attribute='creation_date') | last }}"
   - name: Get the image_id
     debug:
        var: instance_ami.image_id
@@ -27,7 +27,7 @@
       region: "{{ aws_region }}"                                                                                                                                                                                                                                     
       key_name: "{{ aws_key_name }}"                                                                           
       instance_type: "{{ aws_instance_type }}"                                                                                                                                                                                                                                                                             
-      image: "{{ erp_ami.image_id }}"                                                                                                                                                                                                                                                                                
+      image: "{{ instance_ami.image_id }}"                                                                                                                                                                                                                                                                                
       instance_tags:
           Name: "{{ project_name }}-{{ instance_version }}-{{ username }}"
           Environment: "{{ environment }}"
