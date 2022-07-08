@@ -52,16 +52,17 @@
 
   - set_fact:
       private_ip: "{{ item.instances.0.private_ip }}"
+      public_ip: "{{ item.instances.0.public_ip }}"
     with_items: 
       - "{{ ec2_instances.results }}"
       
-  - debug: msg="{{ private_ip }}"
+  - debug: msg="{{ public_ip }}"
 
 # The section below only applies if you want build notifications on Slack
 #   - name: Send notification message via Slack
 #     slack:
 #       token: "{{ slack_token }}}}"
-#       msg: "Hello, {{ username }}! \n You just requested a fresh {{ instance_version }} instance with IP `{{ private_ip }}` \n Your username is {{ default_user }} and your password is {{ password }} \n Please allow 3 to 5 minutes for the instance to fully initialize \n Have fun, and use the resources responsibly"
+#       msg: "Hello, {{ username }}! \n You just requested a fresh {{ instance_version }} instance with IP `{{ public_ip }}` \n Your username is {{ default_user }} and your password is {{ password }} \n Please allow 3 to 5 minutes for the instance to fully initialize \n Have fun, and use the resources responsibly"
 #       icon_emoji: "{{ icon_emoji }}"
 #       channel: "{{ channel }}"
 #       username: "{{ slack_user }}"
