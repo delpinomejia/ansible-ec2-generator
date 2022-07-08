@@ -29,7 +29,7 @@
       instance_type: "{{ aws_instance_type }}"                                                                                                                                                                                                                                                                             
       image: "{{ instance_ami.image_id }}"                                                                                                                                                                                                                                                                                
       instance_tags:
-          Name: "{{ project_name }}-{{ instance_ami }}-{{ username }}"
+          Name: "{{ project_name }}-{{ username }}"
           Environment: "{{ environment }}"
           Application: "{{ app_name }}"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               
       wait: yes                                                                                                                                                                                                                                                                           
