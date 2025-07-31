@@ -42,7 +42,6 @@ validate_ansible_syntax:
     - ansible-playbook --syntax-check ec2-playbook.yml
     - echo "Ansible syntax validation completed successfully"
   tags:
-    - validation
     - homelab
     - local
 
@@ -57,7 +56,6 @@ validate_yaml_files:
     - echo "YAML validation completed successfully"
   allow_failure: true
   tags:
-    - validation
     - homelab
     - local
 
@@ -77,7 +75,6 @@ test_ansible_lint:
     - echo "Ansible lint completed"
   allow_failure: true
   tags:
-    - testing
     - homelab
     - local
 
@@ -95,7 +92,6 @@ test_dry_run:
     - echo "Dry run testing completed"
   allow_failure: true
   tags:
-    - testing
     - homelab
     - local
 
@@ -114,7 +110,6 @@ security_scan:
     - grep -r "aws_access_key\|aws_secret_key\|password" . --include="*.yml" --exclude="*sample*" || echo "No hardcoded credentials found"
     - echo "Security scan completed"
   tags:
-    - security
     - homelab
     - local
 
@@ -143,7 +138,6 @@ deploy_infrastructure:
     - main
     - master
   tags:
-    - deployment
     - homelab
     - local
 
@@ -174,7 +168,6 @@ cleanup_resources:
     action: stop
   when: manual
   tags:
-    - cleanup
     - homelab
     - local
 
@@ -193,6 +186,5 @@ validate_documentation:
     - echo "Documentation validation completed"
   allow_failure: true
   tags:
-    - documentation
     - homelab
     - local
