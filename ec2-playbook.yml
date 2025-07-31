@@ -1,68 +1,271 @@
 ---
-- name: Create Instance in AWS
+# ============================================================================
+# Ansible EC2 Instance Generator Playbook
+# ============================================================================
+# Purpose: Automated creation of EC2 instances with proper tagging and configuration
+# Author: Infrastructure Automation Team
+# Version: 2.0
+# Last Updated: $(date +%Y-%m-%d)
+# ============================================================================
+
+- name: "Deploy EC2 Instance with Modern Ansible Modules"
   hosts: localhost
   connection: local
+  gather_facts: false
+  
+  # Load configuration variables from external file
   vars_files:
-  - vars/vars.yml
+    - vars/vars.yml
+  
+  # Pre-flight validation variables
+  vars:
+    required_vars:
+      - aws_region
+      - aws_instance_type
+      - aws_key_name
+      - vpc_subnet_id
+      - aws_security_group
+      - app_name
+      - environment
 
-  tasks:                                                                                                                                      
-  - name: Find the right AMI
-    ec2_ami_info:
-      region: "{{ aws_region }}" 
-      owner: "{{ aws_ami_owner }}"
-      filters:
-        name: "{{ ami_name }}"
-    register: findami
-  - name: Register results as an usable variable
-    set_fact:
-      instance_ami: "{{ findami.images | sort(attribute='creation_date') | last }}"
-  - name: Get the image_id
-    debug:
-       var: instance_ami.image_id
-  - name: Create an EC2 instance                                                                                                                                                                                                                                                                             
-    ec2:
-      state: present
-      aws_access_key: ""                                                                                                                                                                                                                                                                               
-      aws_secret_key: ""
-      region: "{{ aws_region }}"                                                                                                                                                                                                                                     
-      key_name: "{{ aws_key_name }}"                                                                           
-      instance_type: "{{ aws_instance_type }}"                                                                                                                                                                                                                                                                             
-      image: "{{ instance_ami.image_id }}"                                                                                                                                                                                                                                                                                
-      instance_tags:
-          Name: "{{ project_name }}-{{ username }}"
+  tasks:
+    # ========================================================================
+    # VALIDATION PHASE: Ensure all required variables are defined
+    # ========================================================================
+    - name: "Validate required variables are defined"
+      fail:
+        msg: "Required variable {{ item }} is not defined or empty"
+      when: vars[item] is not defined or vars[item] == ""
+      loop: "{{ required_vars }}"
+      tags: [validation, always]
+
+    - name: "Display deployment configuration"
+      debug:
+        msg:
+          - "=== EC2 Deployment Configuration ==="
+          - "Region: {{ aws_region }}"
+          - "Instance Type: {{ aws_instance_type }}"
+          - "Environment: {{ environment }}"
+          - "Application: {{ app_name }}"
+          - "Key Name: {{ aws_key_name }}"
+          - "Security Group: {{ aws_security_group }}"
+          - "Subnet: {{ vpc_subnet_id }}"
+      tags: [info, always]
+
+    # ========================================================================
+    # AMI DISCOVERY PHASE: Find the latest AMI matching criteria
+    # ========================================================================
+    - name: "Discover latest AMI matching specified criteria"
+      amazon.aws.ec2_ami_info:
+        region: "{{ aws_region }}"
+        owners: "{{ aws_ami_owner | default(['amazon']) }}"
+        filters:
+          name: "{{ ami_name | default('amzn2-ami-hvm-*-x86_64-gp2') }}"
+          state: available
+          architecture: x86_64
+      register: ami_discovery
+      tags: [ami, discovery]
+
+    - name: "Select most recent AMI from discovery results"
+      set_fact:
+        selected_ami: "{{ ami_discovery.images | sort(attribute='creation_date') | last }}"
+      when: ami_discovery.images | length > 0
+      tags: [ami, discovery]
+
+    - name: "Fail if no suitable AMI found"
+      fail:
+        msg: "No AMI found matching criteria: {{ ami_name | default('amzn2-ami-hvm-*-x86_64-gp2') }}"
+      when: ami_discovery.images | length == 0
+      tags: [ami, discovery]
+
+    - name: "Display selected AMI information"
+      debug:
+        msg:
+          - "Selected AMI: {{ selected_ami.image_id }}"
+          - "AMI Name: {{ selected_ami.name }}"
+          - "Creation Date: {{ selected_ami.creation_date }}"
+          - "Description: {{ selected_ami.description | default('N/A') }}"
+      tags: [ami, info]
+
+    # ========================================================================
+    # COST ESTIMATION PHASE: Calculate estimated costs
+    # ========================================================================
+    - name: "Calculate estimated hourly cost (USD)"
+      set_fact:
+        estimated_hourly_cost: >
+          {%- if aws_instance_type.startswith('t2.nano') -%}0.0058
+          {%- elif aws_instance_type.startswith('t2.micro') -%}0.0116
+          {%- elif aws_instance_type.startswith('t2.small') -%}0.023
+          {%- elif aws_instance_type.startswith('t3.nano') -%}0.0052
+          {%- elif aws_instance_type.startswith('t3.micro') -%}0.0104
+          {%- elif aws_instance_type.startswith('t3.small') -%}0.0208
+          {%- elif aws_instance_type.startswith('t3.medium') -%}0.0416
+          {%- else -%}0.05
+          {%- endif -%}
+      tags: [cost, info]
+
+    - name: "Display cost estimation"
+      debug:
+        msg:
+          - "=== Cost Estimation ==="
+          - "Instance Type: {{ aws_instance_type }}"
+          - "Estimated Hourly Cost: ${{ estimated_hourly_cost }}"
+          - "Estimated Daily Cost (24h): ${{ (estimated_hourly_cost | float * 24) | round(2) }}"
+          - "Estimated Monthly Cost (30d): ${{ (estimated_hourly_cost | float * 24 * 30) | round(2) }}"
+          - "Note: Costs are estimates and may vary by region"
+      tags: [cost, info]
+
+    # ========================================================================
+    # INSTANCE CREATION PHASE: Deploy EC2 instance with modern module
+    # ========================================================================
+    - name: "Create EC2 instance with comprehensive configuration"
+      amazon.aws.ec2_instance:
+        # Basic instance configuration
+        name: "{{ project_name | default(app_name) }}-{{ username | default('user') }}-{{ ansible_date_time.epoch }}"
+        region: "{{ aws_region }}"
+        key_name: "{{ aws_key_name }}"
+        instance_type: "{{ aws_instance_type }}"
+        image_id: "{{ selected_ami.image_id }}"
+        
+        # Network configuration
+        vpc_subnet_id: "{{ vpc_subnet_id }}"
+        security_groups: "{{ [aws_security_group] if aws_security_group is string else aws_security_group }}"
+        
+        # Storage configuration
+        volumes:
+          - device_name: /dev/xvda
+            ebs:
+              volume_type: "{{ root_volume_type | default('gp3') }}"
+              volume_size: "{{ root_volume_size | default(8) }}"
+              delete_on_termination: true
+              encrypted: "{{ encrypt_root_volume | default(true) }}"
+        
+        # Instance behavior
+        instance_initiated_shutdown_behavior: "{{ aws_instance_initiated_shutdown_behavior | default('terminate') }}"
+        
+        # Comprehensive tagging strategy
+        tags:
+          Name: "{{ project_name | default(app_name) }}-{{ username | default('user') }}-{{ ansible_date_time.epoch }}"
           Environment: "{{ environment }}"
-          Application: "{{ app_name }}"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               
-      wait: yes                                                                                                                                                                                                                                                                           
-      count_tag:                                                                                                                                                                                                                                                                                                           
-          Application: "{{ app_name }}"                                                                                                                                                                                                                                                                          
-      group: "{{ aws_security_group }}"                                                                                                                                                                                                                                                                                    
-      vpc_subnet_id: "{{ vpc_subnet_id }}"                                                                                                                                                                                                                                                            
-      instance_initiated_shutdown_behavior: "{{ aws_instance_initiated_shutdown_behavior }}" 
-    with_random_choice:
-        - 01
-        - 02
-        - 03
-        - 04
-        - 05
-        - 06
-        - 07                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              
-    register: ec2_instances
-    tags:
-      - always
+          Application: "{{ app_name }}"
+          Owner: "{{ username | default('automation') }}"
+          Project: "{{ project_name | default(app_name) }}"
+          CreatedBy: "ansible-ec2-generator"
+          CreatedDate: "{{ ansible_date_time.iso8601 }}"
+          InstanceType: "{{ aws_instance_type }}"
+          CostCenter: "{{ cost_center | default('development') }}"
+          AutoShutdown: "{{ auto_shutdown | default('true') }}"
+          BackupRequired: "{{ backup_required | default('false') }}"
+        
+        # Wait for instance to be running
+        wait: true
+        wait_timeout: 600
+        
+        # State management
+        state: running
+        
+      register: ec2_result
+      tags: [create, instance]
 
-  - set_fact:
-      private_ip: "{{ item.instances.0.private_ip }}"
-      public_ip: "{{ item.instances.0.public_ip }}"
-    with_items: 
-      - "{{ ec2_instances.results }}"
-      
-  - debug: msg="{{ public_ip }}"
+    # ========================================================================
+    # POST-CREATION PHASE: Extract and display instance information
+    # ========================================================================
+    - name: "Extract instance information from creation results"
+      set_fact:
+        instance_info: "{{ ec2_result.instances[0] }}"
+      tags: [info, results]
 
-# The section below only applies if you want build notifications on Slack
-#   - name: Send notification message via Slack
-#     slack:
-#       token: "{{ slack_token }}}}"
-#       msg: "Hello, {{ username }}! \n You just requested a fresh {{ instance_version }} instance with IP `{{ public_ip }}` \n Your username is {{ default_user }} and your password is {{ password }} \n Please allow 3 to 5 minutes for the instance to fully initialize \n Have fun, and use the resources responsibly"
-#       icon_emoji: "{{ icon_emoji }}"
-#       channel: "{{ channel }}"
-#       username: "{{ slack_user }}"
+    - name: "Display comprehensive instance information"
+      debug:
+        msg:
+          - "=== EC2 Instance Successfully Created ==="
+          - "Instance ID: {{ instance_info.instance_id }}"
+          - "Instance Type: {{ instance_info.instance_type }}"
+          - "State: {{ instance_info.state.name }}"
+          - "Private IP: {{ instance_info.private_ip_address | default('N/A') }}"
+          - "Public IP: {{ instance_info.public_ip_address | default('N/A') }}"
+          - "Public DNS: {{ instance_info.public_dns_name | default('N/A') }}"
+          - "Availability Zone: {{ instance_info.placement.availability_zone }}"
+          - "Launch Time: {{ instance_info.launch_time }}"
+          - "AMI ID: {{ instance_info.image_id }}"
+          - "Key Name: {{ instance_info.key_name }}"
+          - "Security Groups: {{ instance_info.security_groups | map(attribute='group_name') | list | join(', ') }}"
+          - "Subnet ID: {{ instance_info.subnet_id }}"
+          - "VPC ID: {{ instance_info.vpc_id }}"
+      tags: [info, results, always]
+
+    # ========================================================================
+    # CONNECTION TESTING PHASE: Verify instance accessibility
+    # ========================================================================
+    - name: "Wait for SSH to become available (if public IP exists)"
+      wait_for:
+        host: "{{ instance_info.public_ip_address }}"
+        port: 22
+        delay: 30
+        timeout: 300
+        state: started
+      when: 
+        - instance_info.public_ip_address is defined
+        - instance_info.public_ip_address != ""
+        - test_ssh_connectivity | default(true) | bool
+      tags: [connectivity, test]
+
+    - name: "Generate SSH connection command"
+      debug:
+        msg:
+          - "=== SSH Connection Information ==="
+          - "SSH Command: ssh -i ~/.ssh/{{ aws_key_name }}.pem ec2-user@{{ instance_info.public_ip_address | default(instance_info.private_ip_address) }}"
+          - "Note: Ensure your SSH key has proper permissions (chmod 400)"
+      when: instance_info.public_ip_address is defined or instance_info.private_ip_address is defined
+      tags: [connectivity, info]
+
+    # ========================================================================
+    # NOTIFICATION PHASE: Send alerts via Slack (optional)
+    # ========================================================================
+    - name: "Send Slack notification about new instance"
+      community.general.slack:
+        token: "{{ slack_token }}"
+        msg: |
+          🚀 *New EC2 Instance Created* 🚀
+          
+          *Instance Details:*
+          • Instance ID: `{{ instance_info.instance_id }}`
+          • Instance Type: `{{ instance_info.instance_type }}`
+          • Environment: `{{ environment }}`
+          • Application: `{{ app_name }}`
+          • Public IP: `{{ instance_info.public_ip_address | default('N/A') }}`
+          • Private IP: `{{ instance_info.private_ip_address | default('N/A') }}`
+          
+          *Connection:*
+          ```
+          ssh -i ~/.ssh/{{ aws_key_name }}.pem ec2-user@{{ instance_info.public_ip_address | default(instance_info.private_ip_address) }}
+          ```
+          
+          *Cost Estimate:* ${{ estimated_hourly_cost }}/hour
+          
+          Created by: {{ username | default('automation') }}
+          Time: {{ ansible_date_time.iso8601 }}
+        channel: "{{ slack_channel }}"
+        username: "{{ slack_username | default('EC2-Generator') }}"
+        icon_emoji: "{{ slack_icon | default(':rocket:') }}"
+      when: 
+        - slack_notifications_enabled | default(false) | bool
+        - slack_token is defined
+        - slack_channel is defined
+      tags: [notification, slack]
+      ignore_errors: true
+
+    # ========================================================================
+    # CLEANUP REMINDER PHASE: Display termination information
+    # ========================================================================
+    - name: "Display cleanup and cost management information"
+      debug:
+        msg:
+          - "=== Important Reminders ==="
+          - "💰 This instance will incur costs of approximately ${{ estimated_hourly_cost }}/hour"
+          - "🕒 Remember to terminate the instance when no longer needed"
+          - "🔧 Termination command: aws ec2 terminate-instances --instance-ids {{ instance_info.instance_id }}"
+          - "📊 Monitor costs via AWS Cost Explorer"
+          - "⚡ Consider using auto-shutdown tags for cost optimization"
+          - "🔒 Ensure security groups follow least privilege principle"
+      tags: [info, cleanup, always]
