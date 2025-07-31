@@ -211,44 +211,82 @@ We welcome contributions! Please see our contributing guidelines:
 ### 📚 Technical References
 
 - **[Ansible Documentation](https://docs.ansible.com/)** - Official Ansible documentation and best practices
-- **[AWS EC2 User Guide](https://docs.aws.amazon.com/ec2/)** - Amazon EC2 service documentation
-- **[Ansible AWS Collection](https://docs.ansible.com/ansible/latest/collections/amazon/aws/)** - AWS modules and plugins
+- **[Ansible Playbook Best Practices](https://docs.ansible.com/ansible/latest/user_guide/playbooks_best_practices.html)** - Structure and organization guidelines
+- **[AWS EC2 User Guide](https://docs.aws.amazon.com/ec2/latest/userguide/)** - Complete Amazon EC2 service documentation
+- **[AWS EC2 Instance Types](https://aws.amazon.com/ec2/instance-types/)** - Instance specifications and pricing
+- **[Ansible AWS Collection](https://docs.ansible.com/ansible/latest/collections/amazon/aws/)** - AWS modules and plugins reference
+- **[EC2 Instance Module](https://docs.ansible.com/ansible/latest/collections/amazon/aws/ec2_instance_module.html)** - Modern EC2 instance management
 - **[GitLab CI/CD Documentation](https://docs.gitlab.com/ee/ci/)** - CI/CD pipeline implementation guidance
+- **[GitLab CI YAML Reference](https://docs.gitlab.com/ee/ci/yaml/)** - Complete CI configuration syntax
 
 ### 🔧 Tools & Technologies
 
 - **[Ansible](https://www.ansible.com/)** - Infrastructure automation platform
+- **[Ansible Galaxy](https://galaxy.ansible.com/)** - Community hub for Ansible content
 - **[Amazon Web Services](https://aws.amazon.com/)** - Cloud computing platform
+- **[AWS CLI Documentation](https://docs.aws.amazon.com/cli/)** - Command line interface reference
 - **[GitLab CI](https://about.gitlab.com/stages-devops-lifecycle/continuous-integration/)** - Continuous integration platform
 - **[Python](https://www.python.org/)** - Programming language for AWS SDK
+- **[Boto3 Documentation](https://boto3.amazonaws.com/v1/documentation/api/latest/index.html)** - AWS SDK for Python
+- **[Jinja2 Templates](https://jinja.palletsprojects.com/)** - Template engine used by Ansible
 
 ### 🎨 Design Inspiration
 
-- **[Shields.io](https://shields.io/)** - Beautiful badges for README
+- **[Shields.io](https://shields.io/)** - Beautiful badges for README files
+- **[Simple Icons](https://simpleicons.org/)** - SVG icons for popular brands
 - **[GitHub Readme Stats](https://github.com/anuraghazra/github-readme-stats)** - Dynamic repository statistics
 - **[Awesome README](https://github.com/matiassingers/awesome-readme)** - Curated list of awesome READMEs
 - **[readme.so](https://readme.so/)** - README template and design patterns
+- **[Emoji Cheat Sheet](https://github.com/ikatyang/emoji-cheat-sheet)** - GitHub emoji reference
+- **[Markdown Guide](https://www.markdownguide.org/)** - Comprehensive Markdown syntax reference
 
 ### 📖 Security & Best Practices
 
 - **[AWS Security Best Practices](https://aws.amazon.com/architecture/security-identity-compliance/)** - Cloud security guidelines
+- **[AWS Well-Architected Framework](https://aws.amazon.com/architecture/well-architected/)** - Design principles and best practices
+- **[AWS IAM Best Practices](https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html)** - Identity and access management
 - **[Ansible Security](https://docs.ansible.com/ansible/latest/user_guide/playbooks_best_practices.html#security)** - Ansible security best practices
+- **[Ansible Vault](https://docs.ansible.com/ansible/latest/user_guide/vault.html)** - Encrypting sensitive data
 - **[OWASP](https://owasp.org/)** - Web application security principles
+- **[OWASP Top 10](https://owasp.org/www-project-top-ten/)** - Most critical security risks
 - **[Center for Internet Security (CIS)](https://www.cisecurity.org/)** - Security configuration benchmarks
+- **[CIS AWS Benchmarks](https://www.cisecurity.org/benchmark/amazon_web_services)** - AWS-specific security benchmarks
 
 ### 🌟 Community Resources
 
 - **[Ansible Community](https://www.ansible.com/community)** - Community support and contributions
+- **[Ansible Community Guide](https://docs.ansible.com/ansible/latest/community/)** - Contributing guidelines
 - **[AWS Community](https://aws.amazon.com/developer/community/)** - AWS developer community resources
+- **[AWS re:Post](https://repost.aws/)** - AWS community Q&A platform
 - **[DevOps Community](https://devops.com/)** - DevOps practices and methodologies
+- **[Reddit r/ansible](https://www.reddit.com/r/ansible/)** - Ansible community discussions
+- **[Reddit r/aws](https://www.reddit.com/r/aws/)** - AWS community discussions
 - **[Infrastructure as Code Patterns](https://www.oreilly.com/library/view/infrastructure-as-code/9781491924334/)** - IaC design patterns
 
 ### 🔍 Code Quality & Testing
 
-- **[Ansible Lint](https://ansible-lint.readthedocs.io/)** - Ansible playbook linting
-- **[YAML Lint](https://yamllint.readthedocs.io/)** - YAML file validation
-- **[Bandit](https://bandit.readthedocs.io/)** - Python security vulnerability scanning
+- **[Ansible Lint](https://ansible-lint.readthedocs.io/en/latest/)** - Ansible playbook linting
+- **[Ansible Lint Rules](https://ansible-lint.readthedocs.io/en/latest/default_rules/)** - Complete rule reference
+- **[YAML Lint](https://yamllint.readthedocs.io/en/stable/)** - YAML file validation
+- **[Bandit](https://bandit.readthedocs.io/en/latest/)** - Python security vulnerability scanning
 - **[Safety](https://pypi.org/project/safety/)** - Python dependency vulnerability checking
+- **[pytest-ansible](https://github.com/ansible-community/pytest-ansible)** - Testing Ansible with pytest
+- **[Molecule](https://molecule.readthedocs.io/en/latest/)** - Ansible role testing framework
+
+### 💰 Cost Management Resources
+
+- **[AWS Pricing Calculator](https://calculator.aws/)** - Estimate AWS service costs
+- **[AWS Cost Explorer](https://aws.amazon.com/aws-cost-management/aws-cost-explorer/)** - Analyze spending patterns
+- **[AWS Budgets](https://aws.amazon.com/aws-cost-management/aws-budgets/)** - Set custom cost alerts
+- **[EC2 Instance Pricing](https://aws.amazon.com/ec2/pricing/)** - Detailed EC2 pricing information
+- **[AWS Trusted Advisor](https://aws.amazon.com/support/trusted-advisor/)** - Cost optimization recommendations
+
+### 🎓 Learning Resources
+
+- **[Ansible for DevOps](https://www.ansiblefordevops.com/)** - Comprehensive Ansible guide
+- **[AWS Training](https://aws.amazon.com/training/)** - Official AWS learning paths
+- **[GitLab Learn](https://about.gitlab.com/learn/)** - GitLab tutorials and guides
+- **[Infrastructure as Code Tutorial](https://learn.hashicorp.com/tutorials/terraform/infrastructure-as-code)** - IaC concepts and practices
 
 ---
 
