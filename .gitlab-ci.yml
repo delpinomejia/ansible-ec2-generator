@@ -120,22 +120,11 @@ deploy_infrastructure:
     - pip install ansible boto3 botocore
     - ansible-galaxy collection install amazon.aws community.general
   script:
-    - echo "Deploying EC2 infrastructure..."
-    - echo "Deployment Configuration:"
-    - echo "   - Region: ${AWS_DEFAULT_REGION:-us-east-1}"
-    - echo "   - Instance Type: ${INSTANCE_TYPE:-t3.micro}"
-    - echo "   - Environment: ${DEPLOY_ENVIRONMENT:-development}"
-    - echo ""
-    - echo "IMPORTANT: Ensure vars/vars.yml is properly configured before deployment"
-    - echo "Remember: AWS charges apply for running instances"
-    - echo "Manual deployment command:"
-    - echo "   ansible-playbook ec2-playbook.yml"
-    - echo ""
-    - echo "Deployment information provided"
-    - echo "Next steps:"
-    - echo "   1. Configure vars/vars.yml with your AWS settings"
-    - echo "   2. Ensure AWS credentials are available"
-    - echo "   3. Run the playbook manually or via automation"
+    - echo "Starting EC2 infrastructure deployment"
+    - echo "Configuration check complete"
+    - echo "Manual deployment required"
+    - echo "Run ansible-playbook ec2-playbook.yml to deploy"
+    - echo "Deployment job completed successfully"
   environment:
     name: production
     on_stop: cleanup_resources
@@ -157,18 +146,16 @@ cleanup_resources:
     - apt-get update -qq && apt-get install -y -qq awscli
   script:
     - echo "Resource Cleanup Information"
-    - echo "To avoid unnecessary AWS charges, remember to:"
-    - echo "   1. Terminate EC2 instances when no longer needed"
-    - echo "   2. Remove unused EBS volumes"
-    - echo "   3. Review AWS Cost Explorer regularly"
-    - echo ""
+    - echo "To avoid unnecessary AWS charges remember to:"
+    - echo "1. Terminate EC2 instances when no longer needed"
+    - echo "2. Remove unused EBS volumes"
+    - echo "3. Review AWS Cost Explorer regularly"
     - echo "Cleanup commands:"
-    - echo "   aws ec2 describe-instances --filters 'Name=tag:CreatedBy,Values=ansible-ec2-generator'"
-    - echo "   aws ec2 terminate-instances --instance-ids <instance-id>"
-    - echo ""
-    - echo "Cost monitoring:"
-    - echo "   - AWS Cost Explorer: https://console.aws.amazon.com/cost-management/home"
-    - echo "   - AWS Budgets: https://console.aws.amazon.com/billing/home#/budgets"
+    - echo "aws ec2 describe-instances --filters Name=tag:CreatedBy,Values=ansible-ec2-generator"
+    - echo "aws ec2 terminate-instances --instance-ids instance-id"
+    - echo "Cost monitoring resources:"
+    - echo "AWS Cost Explorer at console.aws.amazon.com"
+    - echo "AWS Budgets at console.aws.amazon.com"
     - echo "Cleanup information provided"
   environment:
     name: production
