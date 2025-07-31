@@ -43,6 +43,8 @@ validate_ansible_syntax:
     - echo "Ansible syntax validation completed successfully"
   tags:
     - validation
+    - homelab
+    - local
 
 validate_yaml_files:
   stage: validate
@@ -56,6 +58,8 @@ validate_yaml_files:
   allow_failure: true
   tags:
     - validation
+    - homelab
+    - local
 
 # ============================================================================
 # TESTING STAGE: Comprehensive testing and linting
@@ -74,6 +78,8 @@ test_ansible_lint:
   allow_failure: true
   tags:
     - testing
+    - homelab
+    - local
 
 test_dry_run:
   stage: test
@@ -90,6 +96,8 @@ test_dry_run:
   allow_failure: true
   tags:
     - testing
+    - homelab
+    - local
 
 # ============================================================================
 # SECURITY STAGE: Security scanning and validation
@@ -107,6 +115,8 @@ security_scan:
     - echo "Security scan completed"
   tags:
     - security
+    - homelab
+    - local
 
 # ============================================================================
 # DEPLOYMENT STAGE: Conditional deployment with manual approval
@@ -134,6 +144,8 @@ deploy_infrastructure:
     - master
   tags:
     - deployment
+    - homelab
+    - local
 
 # ============================================================================
 # CLEANUP STAGE: Resource cleanup and cost management
@@ -163,6 +175,8 @@ cleanup_resources:
   when: manual
   tags:
     - cleanup
+    - homelab
+    - local
 
 # ============================================================================
 # DOCUMENTATION STAGE: Generate and validate documentation
@@ -180,3 +194,5 @@ validate_documentation:
   allow_failure: true
   tags:
     - documentation
+    - homelab
+    - local
