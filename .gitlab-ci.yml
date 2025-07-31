@@ -38,9 +38,9 @@ validate_ansible_syntax:
     - pip install ansible
     - ansible-galaxy collection install amazon.aws community.general
   script:
-    - echo "🔍 Validating Ansible playbook syntax..."
+    - echo "Validating Ansible playbook syntax..."
     - ansible-playbook --syntax-check ec2-playbook.yml
-    - echo "✅ Ansible syntax validation completed successfully"
+    - echo "Ansible syntax validation completed successfully"
   tags:
     - validation
 
@@ -50,9 +50,9 @@ validate_yaml_files:
   before_script:
     - pip install yamllint
   script:
-    - echo "📋 Validating YAML file structure..."
+    - echo "Validating YAML file structure..."
     - yamllint -d relaxed *.yml vars/*.yml
-    - echo "✅ YAML validation completed successfully"
+    - echo "YAML validation completed successfully"
   allow_failure: true
   tags:
     - validation
@@ -68,9 +68,9 @@ test_ansible_lint:
     - pip install ansible ansible-lint
     - ansible-galaxy collection install amazon.aws community.general
   script:
-    - echo "🔍 Running Ansible Lint checks..."
-    - ansible-lint ec2-playbook.yml || echo "⚠️ Lint warnings found (non-blocking)"
-    - echo "✅ Ansible lint completed"
+    - echo "Running Ansible Lint checks..."
+    - ansible-lint ec2-playbook.yml || echo "Lint warnings found (non-blocking)"
+    - echo "Ansible lint completed"
   allow_failure: true
   tags:
     - testing
@@ -84,9 +84,9 @@ test_dry_run:
     - ansible-galaxy collection install amazon.aws community.general
     - cp vars/vars_sample.yml vars/vars.yml
   script:
-    - echo "🧪 Running Ansible playbook dry-run (check mode)..."
-    - ansible-playbook --check --diff ec2-playbook.yml || echo "⚠️ Dry run completed with warnings (expected without real AWS credentials)"
-    - echo "✅ Dry run testing completed"
+    - echo "Running Ansible playbook dry-run (check mode)..."
+    - ansible-playbook --check --diff ec2-playbook.yml || echo "Dry run completed with warnings (expected without real AWS credentials)"
+    - echo "Dry run testing completed"
   allow_failure: true
   tags:
     - testing
@@ -101,10 +101,10 @@ security_scan:
   before_script:
     - pip install bandit safety
   script:
-    - echo "🔒 Running security scans..."
+    - echo "Running security scans..."
     - echo "Checking for hardcoded secrets in YAML files..."
-    - grep -r "aws_access_key\|aws_secret_key\|password" . --include="*.yml" --exclude="*sample*" || echo "✅ No hardcoded credentials found"
-    - echo "✅ Security scan completed"
+    - grep -r "aws_access_key\|aws_secret_key\|password" . --include="*.yml" --exclude="*sample*" || echo "No hardcoded credentials found"
+    - echo "Security scan completed"
   tags:
     - security
 
@@ -120,19 +120,19 @@ deploy_infrastructure:
     - pip install ansible boto3 botocore
     - ansible-galaxy collection install amazon.aws community.general
   script:
-    - echo "🚀 Deploying EC2 infrastructure..."
-    - echo "📋 Deployment Configuration:"
+    - echo "Deploying EC2 infrastructure..."
+    - echo "Deployment Configuration:"
     - echo "   - Region: ${AWS_DEFAULT_REGION:-us-east-1}"
     - echo "   - Instance Type: ${INSTANCE_TYPE:-t3.micro}"
     - echo "   - Environment: ${DEPLOY_ENVIRONMENT:-development}"
     - echo ""
-    - echo "⚠️  IMPORTANT: Ensure vars/vars.yml is properly configured before deployment"
-    - echo "💰 Remember: AWS charges apply for running instances"
-    - echo "🔧 Manual deployment command:"
+    - echo "IMPORTANT: Ensure vars/vars.yml is properly configured before deployment"
+    - echo "Remember: AWS charges apply for running instances"
+    - echo "Manual deployment command:"
     - echo "   ansible-playbook ec2-playbook.yml"
     - echo ""
-    - echo "✅ Deployment information provided"
-    - echo "📝 Next steps:"
+    - echo "Deployment information provided"
+    - echo "Next steps:"
     - echo "   1. Configure vars/vars.yml with your AWS settings"
     - echo "   2. Ensure AWS credentials are available"
     - echo "   3. Run the playbook manually or via automation"
@@ -156,20 +156,20 @@ cleanup_resources:
   before_script:
     - apt-get update -qq && apt-get install -y -qq awscli
   script:
-    - echo "🧹 Resource Cleanup Information"
-    - echo "💡 To avoid unnecessary AWS charges, remember to:"
+    - echo "Resource Cleanup Information"
+    - echo "To avoid unnecessary AWS charges, remember to:"
     - echo "   1. Terminate EC2 instances when no longer needed"
     - echo "   2. Remove unused EBS volumes"
     - echo "   3. Review AWS Cost Explorer regularly"
     - echo ""
-    - echo "🔧 Cleanup commands:"
+    - echo "Cleanup commands:"
     - echo "   aws ec2 describe-instances --filters 'Name=tag:CreatedBy,Values=ansible-ec2-generator'"
     - echo "   aws ec2 terminate-instances --instance-ids <instance-id>"
     - echo ""
-    - echo "📊 Cost monitoring:"
+    - echo "Cost monitoring:"
     - echo "   - AWS Cost Explorer: https://console.aws.amazon.com/cost-management/home"
     - echo "   - AWS Budgets: https://console.aws.amazon.com/billing/home#/budgets"
-    - echo "✅ Cleanup information provided"
+    - echo "Cleanup information provided"
   environment:
     name: production
     action: stop
@@ -187,9 +187,9 @@ validate_documentation:
   before_script:
     - npm install -g markdownlint-cli
   script:
-    - echo "📚 Validating documentation..."
-    - markdownlint README.md || echo "⚠️ Documentation warnings found (non-blocking)"
-    - echo "✅ Documentation validation completed"
+    - echo "Validating documentation..."
+    - markdownlint README.md || echo "Documentation warnings found (non-blocking)"
+    - echo "Documentation validation completed"
   allow_failure: true
   tags:
     - documentation
