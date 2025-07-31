@@ -1,5 +1,5 @@
 ﻿GitLab CI Pipeline Validation Results
-Date: 07/31/2025 15:57:31
+Date: 07/31/2025 16:07:30
 ========================================
 [INFO] Starting GitLab CI Pipeline Validation
 [INFO] Project root: Z:\Code\ansible-ec2-generator
@@ -11,7 +11,9 @@ Date: 07/31/2025 15:57:31
 [SUCCESS] Required file found: requirements.txt
 [SUCCESS] Required file found: .gitignore
 [INFO] Validating YAML syntax...
-[WARNING] yamllint not installed, skipping YAML validation
+[SUCCESS] GitLab CI YAML syntax is valid
+[WARNING] YAML file has syntax issues (non-blocking): ec2-playbook.yml
+[SUCCESS] YAML syntax validation completed
 [INFO] Validating Ansible playbook syntax...
 [WARNING] ansible-playbook not installed, skipping Ansible validation
 [INFO] Validating Python dependencies...

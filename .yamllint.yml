@@ -1,0 +1,60 @@
+# ============================================================================
+# yamllint Configuration for Ansible EC2 Generator
+# ============================================================================
+# This configuration provides reasonable YAML validation rules that focus
+# on critical syntax errors while being permissive on style preferences
+# ============================================================================
+
+extends: relaxed
+
+rules:
+  # Allow longer lines for complex configuration
+  line-length:
+    max: 120
+    level: warning
+
+  # Allow Windows line endings for cross-platform compatibility
+  new-line-at-end-of-file:
+    level: warning
+  
+  # Allow both Unix (LF) and Windows (CRLF) line endings
+  new-lines:
+    type: platform
+
+  # Be more permissive with trailing spaces (common in CI files)
+  trailing-spaces:
+    level: warning
+
+  # Allow empty lines for better readability
+  empty-lines:
+    max-start: 0
+    max: 3
+    max-end: 1
+
+  # Be flexible with indentation in complex structures
+  indentation:
+    spaces: 2
+    indent-sequences: true
+    check-multi-line-strings: false
+
+  # Allow truthy values common in CI configurations
+  truthy:
+    allowed-values: ['true', 'false', 'yes', 'no', 'on', 'off']
+    check-keys: false
+
+  # Don't enforce document start markers
+  document-start:
+    present: false
+
+  # Allow comments for documentation
+  comments:
+    min-spaces-from-content: 1
+    min-spaces-from-content: 1
+
+# Ignore certain files that may have different formatting requirements
+ignore: |
+  validation-results.log
+  *.log
+  .git/
+  venv/
+  __pycache__/
