@@ -23,8 +23,6 @@
       - aws_region
       - aws_instance_type
       - aws_key_name
-      - vpc_subnet_id
-      - aws_security_group
       - app_name
       - environment
 
@@ -51,6 +49,76 @@
           - "Security Group: {{ aws_security_group }}"
           - "Subnet: {{ vpc_subnet_id }}"
       tags: [info, always]
+
+    # ========================================================================
+    # VPC DISCOVERY PHASE: Find default VPC if not specified
+    # ========================================================================
+    - name: "Discover default VPC information"
+      amazon.aws.ec2_vpc_info:
+        region: "{{ aws_region }}"
+        filters:
+          is-default: "true"
+      register: default_vpc_discovery
+      when: vpc_subnet_id is not defined or vpc_subnet_id == ""
+      tags: [vpc, discovery]
+
+    - name: "Set default VPC ID"
+      set_fact:
+        discovered_vpc_id: "{{ default_vpc_discovery.vpcs[0].vpc_id }}"
+      when: 
+        - vpc_subnet_id is not defined or vpc_subnet_id == ""
+        - default_vpc_discovery.vpcs | length > 0
+      tags: [vpc, discovery]
+
+    - name: "Discover default subnet in default VPC"
+      amazon.aws.ec2_subnet_info:
+        region: "{{ aws_region }}"
+        filters:
+          vpc-id: "{{ discovered_vpc_id }}"
+          default-for-az: "true"
+      register: default_subnet_discovery
+      when: 
+        - vpc_subnet_id is not defined or vpc_subnet_id == ""
+        - discovered_vpc_id is defined
+      tags: [vpc, discovery]
+
+    - name: "Set discovered subnet ID"
+      set_fact:
+        discovered_subnet_id: "{{ default_subnet_discovery.subnets[0].subnet_id }}"
+      when:
+        - vpc_subnet_id is not defined or vpc_subnet_id == ""
+        - default_subnet_discovery.subnets | length > 0
+      tags: [vpc, discovery]
+
+    - name: "Set final subnet ID (custom or discovered)"
+      set_fact:
+        final_subnet_id: "{{ vpc_subnet_id if (vpc_subnet_id is defined and vpc_subnet_id != '') else discovered_subnet_id }}"
+      tags: [vpc, discovery]
+
+    - name: "Discover or create default security group"
+      amazon.aws.ec2_security_group_info:
+        region: "{{ aws_region }}"
+        filters:
+          group-name: "default"
+          vpc-id: "{{ discovered_vpc_id if discovered_vpc_id is defined else vpc_id }}"
+      register: default_sg_discovery
+      when: aws_security_group is not defined or aws_security_group == ""
+      tags: [security, discovery]
+
+    - name: "Set final security group (custom or default)"
+      set_fact:
+        final_security_group: "{{ aws_security_group if (aws_security_group is defined and aws_security_group != '') else default_sg_discovery.security_groups[0].group_id }}"
+      tags: [security, discovery]
+
+    - name: "Display VPC and network configuration"
+      debug:
+        msg:
+          - "=== Network Configuration ==="
+          - "VPC ID: {{ discovered_vpc_id | default('Using custom VPC') }}"
+          - "Subnet ID: {{ final_subnet_id }}"
+          - "Security Group: {{ final_security_group }}"
+          - "Configuration: {{ 'Using default VPC/subnet' if discovered_vpc_id is defined else 'Using custom network settings' }}"
+      tags: [info, network]
 
     # ========================================================================
     # AMI DISCOVERY PHASE: Find the latest AMI matching criteria
@@ -128,8 +196,8 @@
         image_id: "{{ selected_ami.image_id }}"
         
         # Network configuration
-        vpc_subnet_id: "{{ vpc_subnet_id }}"
-        security_groups: "{{ [aws_security_group] if aws_security_group is string else aws_security_group }}"
+        vpc_subnet_id: "{{ final_subnet_id }}"
+        security_groups: "{{ [final_security_group] if final_security_group is string else final_security_group }}"
         
         # Storage configuration
         volumes:
@@ -218,42 +286,6 @@
           - "Note: Ensure your SSH key has proper permissions (chmod 400)"
       when: instance_info.public_ip_address is defined or instance_info.private_ip_address is defined
       tags: [connectivity, info]
-
-    # ========================================================================
-    # NOTIFICATION PHASE: Send alerts via Slack (optional)
-    # ========================================================================
-    - name: "Send Slack notification about new instance"
-      community.general.slack:
-        token: "{{ slack_token }}"
-        msg: |
-          🚀 *New EC2 Instance Created* 🚀
-          
-          *Instance Details:*
-          • Instance ID: `{{ instance_info.instance_id }}`
-          • Instance Type: `{{ instance_info.instance_type }}`
-          • Environment: `{{ environment }}`
-          • Application: `{{ app_name }}`
-          • Public IP: `{{ instance_info.public_ip_address | default('N/A') }}`
-          • Private IP: `{{ instance_info.private_ip_address | default('N/A') }}`
-          
-          *Connection:*
-          ```
-          ssh -i ~/.ssh/{{ aws_key_name }}.pem ec2-user@{{ instance_info.public_ip_address | default(instance_info.private_ip_address) }}
-          ```
-          
-          *Cost Estimate:* ${{ estimated_hourly_cost }}/hour
-          
-          Created by: {{ username | default('automation') }}
-          Time: {{ ansible_date_time.iso8601 }}
-        channel: "{{ slack_channel }}"
-        username: "{{ slack_username | default('EC2-Generator') }}"
-        icon_emoji: "{{ slack_icon | default(':rocket:') }}"
-      when: 
-        - slack_notifications_enabled | default(false) | bool
-        - slack_token is defined
-        - slack_channel is defined
-      tags: [notification, slack]
-      ignore_errors: true
 
     # ========================================================================
     # CLEANUP REMINDER PHASE: Display termination information

@@ -1,0 +1,10 @@
+stages:
+  - test
+
+test_job:
+  stage: test
+  script:
+    - echo "hello world"
+  tags:
+    - homelab
+    - local
