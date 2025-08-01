@@ -17,7 +17,6 @@ build_ami:
   stage: build
   script:
     - echo "Build stage"
-  when: manual
   tags:
     - homelab
     - local
@@ -26,7 +25,6 @@ deploy_infrastructure:
   stage: deploy
   script:
     - echo "Deploy stage"
-  when: manual
   tags:
     - homelab
     - local
