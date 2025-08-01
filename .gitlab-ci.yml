@@ -29,11 +29,10 @@ build_configuration:
 
 deploy_to_aws:
   stage: deploy
-  before_script:
+  script:
     - echo "Checking AWS credentials and configuration..."
     - aws sts get-caller-identity || echo "Warning: AWS credentials not configured"
     - test -f vars/vars.yml || echo "Warning: vars.yml not found"
-  script:
     - echo "Starting AWS EC2 deployment..."
     - echo "Running deployment dry-run first..."
     - ansible-playbook ec2-playbook.yml --check --diff
