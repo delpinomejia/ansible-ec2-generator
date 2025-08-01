@@ -31,23 +31,8 @@ cache:
 
 validate_ansible_syntax:
   stage: validate
-  image: python:3.9
+  image: python:3.9-slim
   before_script:
-    # Wait for and handle dpkg lock issues
-    - |
-      echo "Waiting for dpkg lock to be released..."
-      while fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1; do
-        echo "Waiting for dpkg lock..."
-        sleep 5
-      done
-    # Kill any hanging apt processes
-    - sudo killall apt apt-get dpkg >/dev/null 2>&1 || true
-    - sudo rm -f /var/lib/apt/lists/lock
-    - sudo rm -f /var/cache/apt/archives/lock
-    - sudo rm -f /var/lib/dpkg/lock*
-    - sudo dpkg --configure -a
-    # Update package lists and install dependencies
-    - apt-get update -qq && apt-get install -y -qq git ssh
     - pip install --upgrade pip
     - pip install ansible
     - ansible-galaxy collection install amazon.aws community.general
@@ -96,21 +81,6 @@ test_dry_run:
   stage: test
   image: python:3.9-slim
   before_script:
-    # Wait for and handle dpkg lock issues
-    - |
-      echo "Waiting for dpkg lock to be released..."
-      while fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1; do
-        echo "Waiting for dpkg lock..."
-        sleep 5
-      done
-    # Kill any hanging apt processes
-    - sudo killall apt apt-get dpkg >/dev/null 2>&1 || true
-    - sudo rm -f /var/lib/apt/lists/lock
-    - sudo rm -f /var/cache/apt/archives/lock
-    - sudo rm -f /var/lib/dpkg/lock*
-    - sudo dpkg --configure -a
-    # Update package lists and install dependencies
-    - apt-get update -qq && apt-get install -y -qq git ssh
     - pip install ansible boto3 botocore
     - ansible-galaxy collection install amazon.aws community.general
     - cp vars/vars_sample.yml vars/vars.yml
@@ -147,25 +117,7 @@ security_scan:
 
 deploy_infrastructure:
   stage: deploy
-  image: python:3.9-slim
-  before_script:
-    # Wait for and handle dpkg lock issues
-    - |
-      echo "Waiting for dpkg lock to be released..."
-      while fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1; do
-        echo "Waiting for dpkg lock..."
-        sleep 5
-      done
-    # Kill any hanging apt processes
-    - sudo killall apt apt-get dpkg >/dev/null 2>&1 || true
-    - sudo rm -f /var/lib/apt/lists/lock
-    - sudo rm -f /var/cache/apt/archives/lock
-    - sudo rm -f /var/lib/dpkg/lock*
-    - sudo dpkg --configure -a
-    # Update package lists and install dependencies
-    - apt-get update -qq && apt-get install -y -qq git ssh awscli
-    - pip install ansible boto3 botocore
-    - ansible-galaxy collection install amazon.aws community.general
+  image: alpine:3.18
   script:
     - echo "Starting EC2 infrastructure deployment"
     - echo "Configuration check complete"
@@ -189,23 +141,7 @@ deploy_infrastructure:
 
 cleanup_resources:
   stage: cleanup
-  image: python:3.9-slim
-  before_script:
-    # Wait for and handle dpkg lock issues
-    - |
-      echo "Waiting for dpkg lock to be released..."
-      while fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1; do
-        echo "Waiting for dpkg lock..."
-        sleep 5
-      done
-    # Kill any hanging apt processes
-    - sudo killall apt apt-get dpkg >/dev/null 2>&1 || true
-    - sudo rm -f /var/lib/apt/lists/lock
-    - sudo rm -f /var/cache/apt/archives/lock
-    - sudo rm -f /var/lib/dpkg/lock*
-    - sudo dpkg --configure -a
-    # Update package lists and install dependencies
-    - apt-get update -qq && apt-get install -y -qq awscli
+  image: alpine:3.18
   script:
     - echo "Resource Cleanup Information"
     - echo "To avoid unnecessary AWS charges remember to:"
