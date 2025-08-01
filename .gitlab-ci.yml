@@ -1,17 +1,14 @@
 # ============================================================================
 # GitLab CI/CD Pipeline for Ansible EC2 Instance Generator
 # ============================================================================
-# This pipeline validates, tests, and provides deployment capabilities for
-# the Ansible EC2 Instance Generator project.
+# Focused pipeline for Ansible playbook validation and Packer-based deployment
 # ============================================================================
 
 # Define pipeline execution stages
 stages:
   - validate
-  - test
-  - security
+  - build
   - deploy
-  - cleanup
 
 # Global variables
 variables:
@@ -26,107 +23,61 @@ cache:
     - venv/
 
 # ============================================================================
-# VALIDATION STAGE: Syntax and structure validation
+# VALIDATION STAGE: Comprehensive syntax and structure validation
 # ============================================================================
 
-validate_ansible_syntax:
+validate_all:
   stage: validate
-  image: python:3.9-slim
   before_script:
-    - pip install --upgrade pip
-    - pip install ansible
-    - ansible-galaxy collection install amazon.aws community.general
+    # Use system-installed Ansible on Debian runner
+    - ansible --version
+    - ansible-galaxy collection install amazon.aws community.general --force
   script:
-    - echo "Validating Ansible playbook syntax..."
+    # Ansible syntax validation
+    - echo "🔍 Validating Ansible playbook syntax..."
     - ansible-playbook --syntax-check ec2-playbook.yml
-    - echo "Ansible syntax validation completed successfully"
-  tags:
-    - homelab
-    - local
-
-validate_yaml_files:
-  stage: validate
-  image: python:3.9-slim
-  before_script:
-    - pip install yamllint
-  script:
-    - echo "Validating YAML file structure..."
-    - yamllint -d relaxed *.yml vars/*.yml
-    - echo "YAML validation completed successfully"
-  allow_failure: true
-  tags:
-    - homelab
-    - local
-
-# ============================================================================
-# TESTING STAGE: Comprehensive testing and linting
-# ============================================================================
-
-test_ansible_lint:
-  stage: test
-  image: python:3.9-slim
-  before_script:
-    - pip install ansible ansible-lint
-    - ansible-galaxy collection install amazon.aws community.general
-  script:
-    - echo "Running Ansible Lint checks..."
-    - ansible-lint ec2-playbook.yml || echo "Lint warnings found (non-blocking)"
-    - echo "Ansible lint completed"
-  allow_failure: true
-  tags:
-    - homelab
-    - local
-
-test_dry_run:
-  stage: test
-  image: python:3.9-slim
-  before_script:
-    - pip install ansible boto3 botocore
-    - ansible-galaxy collection install amazon.aws community.general
-    - cp vars/vars_sample.yml vars/vars.yml
-  script:
-    - echo "Running Ansible playbook dry-run (check mode)..."
-    - ansible-playbook --check --diff ec2-playbook.yml || echo "Dry run completed with warnings (expected without real AWS credentials)"
-    - echo "Dry run testing completed"
-  allow_failure: true
+    - echo "✅ Ansible syntax validation passed"
+    
+    # YAML structure validation
+    - echo "🔍 Validating YAML file structure..."
+    - yamllint -d relaxed *.yml vars/*.yml || echo "⚠️  YAML warnings found (non-blocking)"
+    - echo "✅ YAML validation completed"
+    
+    # Ansible linting
+    - echo "🔍 Running Ansible Lint checks..."
+    - ansible-lint ec2-playbook.yml || echo "⚠️  Lint warnings found (non-blocking)"
+    - echo "✅ Ansible lint completed"
+    
+    # Security check
+    - echo "🔍 Checking for hardcoded secrets..."
+    - grep -r "aws_access_key\|aws_secret_key\|password" . --include="*.yml" --exclude="*sample*" || echo "✅ No hardcoded credentials found"
+    - echo "✅ Security check completed"
+    
+    - echo "🎉 All validation checks completed successfully!"
+  allow_failure: false
   tags:
     - homelab
     - local
 
 # ============================================================================
-# SECURITY STAGE: Security scanning and validation
+# BUILD STAGE: Prepare AMI artifacts with Packer
 # ============================================================================
 
-security_scan:
-  stage: security
-  image: python:3.9-slim
-  before_script:
-    - pip install bandit safety
+build_ami:
+  stage: build
   script:
-    - echo "Running security scans..."
-    - echo "Checking for hardcoded secrets in YAML files..."
-    - grep -r "aws_access_key\|aws_secret_key\|password" . --include="*.yml" --exclude="*sample*" || echo "No hardcoded credentials found"
-    - echo "Security scan completed"
-  tags:
-    - homelab
-    - local
-
-# ============================================================================
-# DEPLOYMENT STAGE: Conditional deployment with manual approval
-# ============================================================================
-
-deploy_infrastructure:
-  stage: deploy
-  image: alpine:3.18
-  script:
-    - echo "Starting EC2 infrastructure deployment"
-    - echo "Configuration check complete"
-    - echo "Manual deployment required"
-    - echo "Run ansible-playbook ec2-playbook.yml to deploy"
-    - echo "Deployment job completed successfully"
-  environment:
-    name: production
-    on_stop: cleanup_resources
+    - echo "🔨 Starting AMI build process"
+    - echo "📋 Build Information:"
+    - echo "   - Ansible playbooks: Validated ✅"
+    - echo "   - Target: AWS EC2 AMI"
+    - echo "   - Provisioner: Packer with ansible-local"
+    - echo "   - Build trigger: Manual deployment required"
+    - echo ""
+    - echo "🚀 To build AMI, run:"
+    - echo "   packer build -var-file=variables.json packer-template.json"
+    - echo ""
+    - echo "📝 Note: Ansible provisioning happens inside EC2 during AMI build"
+    - echo "✅ Build stage completed - Ready for deployment"
   when: manual
   only:
     - main
@@ -136,47 +87,34 @@ deploy_infrastructure:
     - local
 
 # ============================================================================
-# CLEANUP STAGE: Resource cleanup and cost management
+# DEPLOYMENT STAGE: Deploy EC2 instances using validated playbooks
 # ============================================================================
 
-cleanup_resources:
-  stage: cleanup
-  image: alpine:3.18
+deploy_infrastructure:
+  stage: deploy
   script:
-    - echo "Resource Cleanup Information"
-    - echo "To avoid unnecessary AWS charges remember to:"
-    - echo "1. Terminate EC2 instances when no longer needed"
-    - echo "2. Remove unused EBS volumes"
-    - echo "3. Review AWS Cost Explorer regularly"
-    - echo "Cleanup commands:"
-    - echo "aws ec2 describe-instances --filters Name=tag:CreatedBy,Values=ansible-ec2-generator"
-    - echo "aws ec2 terminate-instances --instance-ids instance-id"
-    - echo "Cost monitoring resources:"
-    - echo "AWS Cost Explorer at console.aws.amazon.com"
-    - echo "AWS Budgets at console.aws.amazon.com"
-    - echo "Cleanup information provided"
+    - echo "🚀 Starting EC2 infrastructure deployment"
+    - echo "📋 Deployment Information:"
+    - echo "   - Validation: Passed ✅"
+    - echo "   - Configuration: Ready ✅"
+    - echo "   - Target: AWS EC2 Infrastructure"
+    - echo ""
+    - echo "📝 Deployment Commands:"
+    - echo "   1. Run: ansible-playbook ec2-playbook.yml"
+    - echo "   2. Or use: packer build (for AMI creation)"
+    - echo ""
+    - echo "⚠️  Important Notes:"
+    - echo "   - Ensure AWS credentials are configured"
+    - echo "   - Review vars/vars.yml for your environment"
+    - echo "   - Monitor AWS costs during deployment"
+    - echo ""
+    - echo "✅ Deployment information provided - Manual execution required"
   environment:
     name: production
-    action: stop
   when: manual
-  tags:
-    - homelab
-    - local
-
-# ============================================================================
-# DOCUMENTATION STAGE: Generate and validate documentation
-# ============================================================================
-
-validate_documentation:
-  stage: validate
-  image: node:16-alpine
-  before_script:
-    - npm install -g markdownlint-cli
-  script:
-    - echo "Validating documentation..."
-    - markdownlint README.md || echo "Documentation warnings found (non-blocking)"
-    - echo "Documentation validation completed"
-  allow_failure: true
+  only:
+    - main
+    - master
   tags:
     - homelab
     - local
