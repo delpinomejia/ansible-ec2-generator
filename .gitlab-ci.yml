@@ -1,30 +1,14 @@
-# ============================================================================
 # GitLab CI/CD Pipeline for Ansible EC2 Instance Generator
-# ============================================================================
 # Focused pipeline for Ansible playbook validation and Packer-based deployment
-# ============================================================================
 
-# Define pipeline execution stages
 stages:
   - validate
   - build
   - deploy
 
-# Global variables
 variables:
   ANSIBLE_HOST_KEY_CHECKING: "false"
   ANSIBLE_FORCE_COLOR: "true"
-  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.pip-cache"
-
-# Cache pip dependencies for faster builds
-cache:
-  paths:
-    - .pip-cache/
-    - venv/
-
-# ============================================================================
-# VALIDATION STAGE: Comprehensive syntax and structure validation
-# ============================================================================
 
 validate_all:
   stage: validate
@@ -32,43 +16,39 @@ validate_all:
     - ansible --version
     - ansible-galaxy collection install amazon.aws community.general --force
   script:
-    - echo "🔍 Validating Ansible playbook syntax..."
+    - echo "Validating Ansible playbook syntax..."
     - ansible-playbook --syntax-check ec2-playbook.yml
-    - echo "✅ Ansible syntax validation passed"
-    - echo "🔍 Validating YAML file structure..."
-    - yamllint -d relaxed *.yml vars/*.yml || echo "⚠️  YAML warnings found (non-blocking)"
-    - echo "✅ YAML validation completed"
-    - echo "🔍 Running Ansible Lint checks..."
-    - ansible-lint ec2-playbook.yml || echo "⚠️  Lint warnings found (non-blocking)"
-    - echo "✅ Ansible lint completed"
-    - echo "🔍 Checking for hardcoded secrets..."
-    - grep -r "aws_access_key\|aws_secret_key\|password" . --include="*.yml" --exclude="*sample*" || echo "✅ No hardcoded credentials found"
-    - echo "✅ Security check completed"
-    - echo "🎉 All validation checks completed successfully!"
+    - echo "Ansible syntax validation passed"
+    - echo "Validating YAML file structure..."
+    - yamllint -d relaxed *.yml vars/*.yml || echo "YAML warnings found (non-blocking)"
+    - echo "YAML validation completed"
+    - echo "Running Ansible Lint checks..."
+    - ansible-lint ec2-playbook.yml || echo "Lint warnings found (non-blocking)"
+    - echo "Ansible lint completed"
+    - echo "Checking for hardcoded secrets..."
+    - grep -r "aws_access_key\|aws_secret_key\|password" . --include="*.yml" --exclude="*sample*" || echo "No hardcoded credentials found"
+    - echo "Security check completed"
+    - echo "All validation checks completed successfully"
   allow_failure: false
   tags:
     - homelab
     - local
 
-# ============================================================================
-# BUILD STAGE: Prepare AMI artifacts with Packer
-# ============================================================================
-
 build_ami:
   stage: build
   script:
-    - echo "🔨 Starting AMI build process"
-    - echo "📋 Build Information:"
-    - echo "   - Ansible playbooks: Validated ✅"
-    - echo "   - Target: AWS EC2 AMI"
-    - echo "   - Provisioner: Packer with ansible-local"
-    - echo "   - Build trigger: Manual deployment required"
+    - echo "Starting AMI build process"
+    - echo "Build Information:"
+    - echo "- Ansible playbooks validated"
+    - echo "- Target AWS EC2 AMI"
+    - echo "- Provisioner Packer with ansible-local"
+    - echo "- Build trigger Manual deployment required"
     - echo ""
-    - echo "🚀 To build AMI, run:"
-    - echo "   packer build -var-file=variables.json packer-template.json"
+    - echo "To build AMI run:"
+    - echo "packer build -var-file=variables.json packer-template.json"
     - echo ""
-    - echo "📝 Note: Ansible provisioning happens inside EC2 during AMI build"
-    - echo "✅ Build stage completed - Ready for deployment"
+    - echo "Note: Ansible provisioning happens inside EC2 during AMI build"
+    - echo "Build stage completed - Ready for deployment"
   when: manual
   only:
     - main
@@ -77,29 +57,25 @@ build_ami:
     - homelab
     - local
 
-# ============================================================================
-# DEPLOYMENT STAGE: Deploy EC2 instances using validated playbooks
-# ============================================================================
-
 deploy_infrastructure:
   stage: deploy
   script:
-    - echo "🚀 Starting EC2 infrastructure deployment"
-    - echo "📋 Deployment Information:"
-    - echo "   - Validation: Passed ✅"
-    - echo "   - Configuration: Ready ✅"
-    - echo "   - Target: AWS EC2 Infrastructure"
+    - echo "Starting EC2 infrastructure deployment"
+    - echo "Deployment Information:"
+    - echo "- Validation Passed"
+    - echo "- Configuration Ready"
+    - echo "- Target AWS EC2 Infrastructure"
     - echo ""
-    - echo "📝 Deployment Commands:"
-    - echo "   1. Run: ansible-playbook ec2-playbook.yml"
-    - echo "   2. Or use: packer build (for AMI creation)"
+    - echo "Deployment Commands:"
+    - echo "1. Run ansible-playbook ec2-playbook.yml"
+    - echo "2. Or use packer build for AMI creation"
     - echo ""
-    - echo "⚠️  Important Notes:"
-    - echo "   - Ensure AWS credentials are configured"
-    - echo "   - Review vars/vars.yml for your environment"
-    - echo "   - Monitor AWS costs during deployment"
+    - echo "Important Notes:"
+    - echo "- Ensure AWS credentials are configured"
+    - echo "- Review vars/vars.yml for your environment"
+    - echo "- Monitor AWS costs during deployment"
     - echo ""
-    - echo "✅ Deployment information provided - Manual execution required"
+    - echo "Deployment information provided - Manual execution required"
   environment:
     name: production
   when: manual
