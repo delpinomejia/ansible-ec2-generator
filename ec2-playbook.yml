@@ -11,7 +11,7 @@
 - name: "Deploy EC2 Instance with Modern Ansible Modules"
   hosts: localhost
   connection: local
-  gather_facts: false
+  gather_facts: true
   
   # Load configuration variables from external file
   vars_files:
