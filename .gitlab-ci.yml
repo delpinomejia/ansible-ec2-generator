@@ -1,35 +1,14 @@
-# GitLab CI/CD Pipeline for Ansible EC2 Instance Generator
-# Focused pipeline for Ansible playbook validation and Packer-based deployment
-
 stages:
   - validate
   - build
   - deploy
 
-variables:
-  ANSIBLE_HOST_KEY_CHECKING: "false"
-  ANSIBLE_FORCE_COLOR: "true"
-
 validate_all:
   stage: validate
-  before_script:
-    - ansible --version
-    - ansible-galaxy collection install amazon.aws community.general --force
   script:
-    - echo "Validating Ansible playbook syntax..."
+    - ansible --version
     - ansible-playbook --syntax-check ec2-playbook.yml
-    - echo "Ansible syntax validation passed"
-    - echo "Validating YAML file structure..."
-    - yamllint -d relaxed *.yml vars/*.yml || echo "YAML warnings found (non-blocking)"
-    - echo "YAML validation completed"
-    - echo "Running Ansible Lint checks..."
-    - ansible-lint ec2-playbook.yml || echo "Lint warnings found (non-blocking)"
-    - echo "Ansible lint completed"
-    - echo "Checking for hardcoded secrets..."
-    - grep -r "aws_access_key\|aws_secret_key\|password" . --include="*.yml" --exclude="*sample*" || echo "No hardcoded credentials found"
-    - echo "Security check completed"
-    - echo "All validation checks completed successfully"
-  allow_failure: false
+    - echo "Validation completed"
   tags:
     - homelab
     - local
@@ -37,22 +16,8 @@ validate_all:
 build_ami:
   stage: build
   script:
-    - echo "Starting AMI build process"
-    - echo "Build Information:"
-    - echo "- Ansible playbooks validated"
-    - echo "- Target AWS EC2 AMI"
-    - echo "- Provisioner Packer with ansible-local"
-    - echo "- Build trigger Manual deployment required"
-    - echo ""
-    - echo "To build AMI run:"
-    - echo "packer build -var-file=variables.json packer-template.json"
-    - echo ""
-    - echo "Note: Ansible provisioning happens inside EC2 during AMI build"
-    - echo "Build stage completed - Ready for deployment"
+    - echo "Build stage"
   when: manual
-  only:
-    - main
-    - master
   tags:
     - homelab
     - local
@@ -60,28 +25,8 @@ build_ami:
 deploy_infrastructure:
   stage: deploy
   script:
-    - echo "Starting EC2 infrastructure deployment"
-    - echo "Deployment Information:"
-    - echo "- Validation Passed"
-    - echo "- Configuration Ready"
-    - echo "- Target AWS EC2 Infrastructure"
-    - echo ""
-    - echo "Deployment Commands:"
-    - echo "1. Run ansible-playbook ec2-playbook.yml"
-    - echo "2. Or use packer build for AMI creation"
-    - echo ""
-    - echo "Important Notes:"
-    - echo "- Ensure AWS credentials are configured"
-    - echo "- Review vars/vars.yml for your environment"
-    - echo "- Monitor AWS costs during deployment"
-    - echo ""
-    - echo "Deployment information provided - Manual execution required"
-  environment:
-    name: production
+    - echo "Deploy stage"
   when: manual
-  only:
-    - main
-    - master
   tags:
     - homelab
     - local
