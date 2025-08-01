@@ -33,26 +33,18 @@ validate_all:
     - ansible --version
     - ansible-galaxy collection install amazon.aws community.general --force
   script:
-    # Ansible syntax validation
     - echo "🔍 Validating Ansible playbook syntax..."
     - ansible-playbook --syntax-check ec2-playbook.yml
     - echo "✅ Ansible syntax validation passed"
-    
-    # YAML structure validation
     - echo "🔍 Validating YAML file structure..."
     - yamllint -d relaxed *.yml vars/*.yml || echo "⚠️  YAML warnings found (non-blocking)"
     - echo "✅ YAML validation completed"
-    
-    # Ansible linting
     - echo "🔍 Running Ansible Lint checks..."
     - ansible-lint ec2-playbook.yml || echo "⚠️  Lint warnings found (non-blocking)"
     - echo "✅ Ansible lint completed"
-    
-    # Security check
     - echo "🔍 Checking for hardcoded secrets..."
     - grep -r "aws_access_key\|aws_secret_key\|password" . --include="*.yml" --exclude="*sample*" || echo "✅ No hardcoded credentials found"
     - echo "✅ Security check completed"
-    
     - echo "🎉 All validation checks completed successfully!"
   allow_failure: false
   tags:
