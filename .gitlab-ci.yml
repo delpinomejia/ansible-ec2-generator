@@ -17,7 +17,9 @@ build_configuration:
   stage: build
   script:
     - echo "Build stage"
-    - cp vars/vars_sample.yml vars/vars.yml || echo "vars.yml exists"
+    - ls -la vars/
+    - cp vars/vars_sample.yml vars/vars.yml
+    - echo "Configuration prepared"
   tags:
     - homelab
     - local
