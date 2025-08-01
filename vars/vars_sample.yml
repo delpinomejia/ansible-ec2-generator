@@ -1,0 +1,39 @@
+---
+# ============================================================================
+# Comprehensive Variable Sample for Ansible EC2 Generator
+# ============================================================================
+# Instructions:
+# 1. This file is automatically copied to 'vars.yml' by the GitHub Actions workflow
+# 2. Update the required values below - VPC and security group are optional!
+# 3. If vpc_subnet_id and aws_security_group are empty, default VPC will be used
+# ============================================================================
+
+# AWS Configuration (Required)
+aws_region: "us-east-1"                # AWS Region
+aws_instance_type: "t3.micro"          # EC2 Instance Type (free tier eligible)
+aws_key_name: "my-ssh-key"             # Your existing EC2 SSH Key Name
+
+# Network Configuration (Optional - leave empty to use default VPC)
+vpc_subnet_id: ""                      # Subnet ID (empty = use default VPC subnet)
+aws_security_group: ""                 # Security Group ID (empty = use default security group)
+
+# AMI Configuration
+aws_ami_owner: ["amazon"]               # AMI Owner
+ami_name: "amzn2-ami-hvm-*-x86_64-gp2" # AMI Name Pattern
+
+# Instance Behavior
+aws_instance_initiated_shutdown_behavior: "terminate" # Shutdown Behavior
+
+# Project and Tags
+app_name: "my-web-app"                 # Application Name
+project_name: "web-server"            # Project Identifier
+environment: "testing"                # Environment Name
+
+# Costs and Tagging
+cost_center: "IT-Dev"                 # Cost Center
+backup_required: "true"               # Backup Requirement
+auto_shutdown: "false"                # Auto-shutdown Enabling
+
+# Advanced Configuration
+encrypt_root_volume: true              # EBS Encryption Toggle
+root_volume_size: 30                   # Root Volume Size (GB)
