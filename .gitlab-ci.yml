@@ -2,12 +2,14 @@ stages:
   - validate
   - build
   - deploy
+  - cleanup
 
 validate_all:
   stage: validate
   script:
     - ansible --version
     - ansible-playbook --syntax-check ec2-playbook.yml
+    - ansible-playbook --syntax-check cleanup-playbook.yml
     - echo "Validation completed"
   tags:
     - homelab
@@ -33,6 +35,17 @@ deploy_to_aws:
   script:
     - echo "Deploy stage"
     - ansible-playbook ec2-playbook.yml
+  tags:
+    - homelab
+    - local
+
+cleanup_aws:
+  stage: cleanup
+  script:
+    - echo "Cleanup stage - Terminating EC2 instances"
+    - ansible-playbook cleanup-playbook.yml -e "confirm_termination=true"
+  when: manual
+  allow_failure: true
   tags:
     - homelab
     - local
