@@ -7,6 +7,8 @@ validate_all:
   stage: validate
   script:
     - ansible --version
+    - pip3 install boto3 botocore
+    - ansible-galaxy collection install amazon.aws community.general --force
     - ansible-playbook --syntax-check ec2-playbook.yml
     - echo "Validation completed"
   tags:
