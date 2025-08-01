@@ -41,11 +41,11 @@ validate_ansible_syntax:
         sleep 5
       done
     # Kill any hanging apt processes
-    - killall apt apt-get dpkg >/dev/null 2>&1 || true
-    - rm -f /var/lib/apt/lists/lock
-    - rm -f /var/cache/apt/archives/lock
-    - rm -f /var/lib/dpkg/lock*
-    - dpkg --configure -a
+    - sudo killall apt apt-get dpkg >/dev/null 2>&1 || true
+    - sudo rm -f /var/lib/apt/lists/lock
+    - sudo rm -f /var/cache/apt/archives/lock
+    - sudo rm -f /var/lib/dpkg/lock*
+    - sudo dpkg --configure -a
     # Update package lists and install dependencies
     - apt-get update -qq && apt-get install -y -qq git ssh
     - pip install --upgrade pip
@@ -104,11 +104,11 @@ test_dry_run:
         sleep 5
       done
     # Kill any hanging apt processes
-    - killall apt apt-get dpkg >/dev/null 2>&1 || true
-    - rm -f /var/lib/apt/lists/lock
-    - rm -f /var/cache/apt/archives/lock
-    - rm -f /var/lib/dpkg/lock*
-    - dpkg --configure -a
+    - sudo killall apt apt-get dpkg >/dev/null 2>&1 || true
+    - sudo rm -f /var/lib/apt/lists/lock
+    - sudo rm -f /var/cache/apt/archives/lock
+    - sudo rm -f /var/lib/dpkg/lock*
+    - sudo dpkg --configure -a
     # Update package lists and install dependencies
     - apt-get update -qq && apt-get install -y -qq git ssh
     - pip install ansible boto3 botocore
@@ -157,11 +157,11 @@ deploy_infrastructure:
         sleep 5
       done
     # Kill any hanging apt processes
-    - killall apt apt-get dpkg >/dev/null 2>&1 || true
-    - rm -f /var/lib/apt/lists/lock
-    - rm -f /var/cache/apt/archives/lock
-    - rm -f /var/lib/dpkg/lock*
-    - dpkg --configure -a
+    - sudo killall apt apt-get dpkg >/dev/null 2>&1 || true
+    - sudo rm -f /var/lib/apt/lists/lock
+    - sudo rm -f /var/cache/apt/archives/lock
+    - sudo rm -f /var/lib/dpkg/lock*
+    - sudo dpkg --configure -a
     # Update package lists and install dependencies
     - apt-get update -qq && apt-get install -y -qq git ssh awscli
     - pip install ansible boto3 botocore
@@ -199,11 +199,11 @@ cleanup_resources:
         sleep 5
       done
     # Kill any hanging apt processes
-    - killall apt apt-get dpkg >/dev/null 2>&1 || true
-    - rm -f /var/lib/apt/lists/lock
-    - rm -f /var/cache/apt/archives/lock
-    - rm -f /var/lib/dpkg/lock*
-    - dpkg --configure -a
+    - sudo killall apt apt-get dpkg >/dev/null 2>&1 || true
+    - sudo rm -f /var/lib/apt/lists/lock
+    - sudo rm -f /var/cache/apt/archives/lock
+    - sudo rm -f /var/lib/dpkg/lock*
+    - sudo dpkg --configure -a
     # Update package lists and install dependencies
     - apt-get update -qq && apt-get install -y -qq awscli
   script:
