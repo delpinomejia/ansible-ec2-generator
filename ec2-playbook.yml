@@ -22,7 +22,6 @@
     required_vars:
       - aws_region
       - aws_instance_type
-      - aws_key_name
       - app_name
       - environment
 
@@ -45,10 +44,43 @@
           - "Instance Type: {{ aws_instance_type }}"
           - "Environment: {{ environment }}"
           - "Application: {{ app_name }}"
-          - "Key Name: {{ aws_key_name }}"
-          - "Security Group: {{ aws_security_group }}"
-          - "Subnet: {{ vpc_subnet_id }}"
+          - "Security Group: {{ aws_security_group | default('Will discover default') }}"
+          - "Subnet: {{ vpc_subnet_id | default('Will discover default') }}"
       tags: [info, always]
+
+    # ========================================================================
+    # SSH KEY PAIR CREATION PHASE: Generate new key pair for this deployment
+    # ========================================================================
+    - name: "Generate unique key pair name"
+      set_fact:
+        dynamic_key_name: "{{ app_name }}-{{ environment }}-{{ ansible_date_time.epoch }}"
+      tags: [keypair, security]
+
+    - name: "Create new EC2 key pair"
+      amazon.aws.ec2_key:
+        name: "{{ dynamic_key_name }}"
+        region: "{{ aws_region }}"
+        state: present
+      register: ec2_key_result
+      tags: [keypair, security]
+
+    - name: "Save private key to temporary file"
+      copy:
+        content: "{{ ec2_key_result.key.private_key }}"
+        dest: "./{{ dynamic_key_name }}.pem"
+        mode: '0600'
+      when: ec2_key_result.key.private_key is defined
+      tags: [keypair, security]
+
+    - name: "Display key pair information"
+      debug:
+        msg:
+          - "=== SSH Key Pair Created ==="
+          - "Key Name: {{ dynamic_key_name }}"
+          - "Key Fingerprint: {{ ec2_key_result.key.fingerprint | default('N/A') }}"
+          - "Private Key Saved: ./{{ dynamic_key_name }}.pem"
+          - "Note: Keep this private key secure and delete after use"
+      tags: [keypair, info]
 
     # ========================================================================
     # VPC DISCOVERY PHASE: Find default VPC if not specified
@@ -190,7 +222,7 @@
         # Basic instance configuration
         name: "{{ project_name | default(app_name) }}-{{ username | default('user') }}-{{ ansible_date_time.epoch }}"
         region: "{{ aws_region }}"
-        key_name: "{{ aws_key_name }}"
+        key_name: "{{ dynamic_key_name }}"
         instance_type: "{{ aws_instance_type }}"
         image_id: "{{ selected_ami.image_id }}"
         
@@ -281,7 +313,7 @@
       debug:
         msg:
           - "=== SSH Connection Information ==="
-          - "SSH Command: ssh -i ~/.ssh/{{ aws_key_name }}.pem ec2-user@{{ instance_info.public_ip_address | default(instance_info.private_ip_address) }}"
+          - "SSH Command: ssh -i ./{{ dynamic_key_name }}.pem ec2-user@{{ instance_info.public_ip_address | default(instance_info.private_ip_address) }}"
           - "Note: Ensure your SSH key has proper permissions (chmod 400)"
       when: instance_info.public_ip_address is defined or instance_info.private_ip_address is defined
       tags: [connectivity, info]
@@ -296,7 +328,27 @@
           - "💰 This instance will incur costs of approximately ${{ estimated_hourly_cost }}/hour"
           - "🕒 Remember to terminate the instance when no longer needed"
           - "🔧 Termination command: aws ec2 terminate-instances --instance-ids {{ instance_info.instance_id }}"
+          - "🔑 Key pair cleanup: aws ec2 delete-key-pair --key-name {{ dynamic_key_name }} --region {{ aws_region }}"
+          - "📁 Local key file: rm ./{{ dynamic_key_name }}.pem"
           - "📊 Monitor costs via AWS Cost Explorer"
           - "⚡ Consider using auto-shutdown tags for cost optimization"
           - "🔒 Ensure security groups follow least privilege principle"
       tags: [info, cleanup, always]
+
+    # ========================================================================
+    # OPTIONAL KEY CLEANUP PHASE: Remove key pair if requested
+    # ========================================================================
+    - name: "Clean up EC2 key pair (optional)"
+      amazon.aws.ec2_key:
+        name: "{{ dynamic_key_name }}"
+        region: "{{ aws_region }}"
+        state: absent
+      when: cleanup_keypair | default(false) | bool
+      tags: [cleanup, keypair]
+
+    - name: "Remove local private key file (optional)"
+      file:
+        path: "./{{ dynamic_key_name }}.pem"
+        state: absent
+      when: cleanup_keypair | default(false) | bool
+      tags: [cleanup, keypair]
