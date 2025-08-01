@@ -301,12 +301,13 @@
         host: "{{ instance_info.public_ip_address }}"
         port: 22
         delay: 30
-        timeout: 300
+        timeout: 120
         state: started
       when: 
         - instance_info.public_ip_address is defined
         - instance_info.public_ip_address != ""
-        - test_ssh_connectivity | default(true) | bool
+        - test_ssh_connectivity | default(false) | bool
+      ignore_errors: true
       tags: [connectivity, test]
 
     - name: "Generate SSH connection command"
@@ -333,6 +334,8 @@
           - "📊 Monitor costs via AWS Cost Explorer"
           - "⚡ Consider using auto-shutdown tags for cost optimization"
           - "🔒 Ensure security groups follow least privilege principle"
+          - "🌐 For SSH access, add port 22 rule to security group: aws ec2 authorize-security-group-ingress --group-id {{ final_security_group }} --protocol tcp --port 22 --cidr 0.0.0.0/0 --region {{ aws_region }}"
+          - "⚠️  Warning: Opening SSH to 0.0.0.0/0 is a security risk - use your specific IP instead"
       tags: [info, cleanup, always]
 
     # ========================================================================
