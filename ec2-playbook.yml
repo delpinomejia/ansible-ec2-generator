@@ -53,30 +53,23 @@
     # ========================================================================
     # VPC DISCOVERY PHASE: Find default VPC if not specified
     # ========================================================================
-    - name: "Discover default VPC information"
-      amazon.aws.ec2_vpc_info:
-        region: "{{ aws_region }}"
-        filters:
-          is-default: "true"
-      register: default_vpc_discovery
+    - name: "Discover default VPC using AWS CLI"
+      command: aws ec2 describe-vpcs --region {{ aws_region }} --filters Name=is-default,Values=true --query 'Vpcs[0].VpcId' --output text
+      register: default_vpc_result
       when: vpc_subnet_id is not defined or vpc_subnet_id == ""
       tags: [vpc, discovery]
 
-    - name: "Set default VPC ID"
+    - name: "Set discovered VPC ID"
       set_fact:
-        discovered_vpc_id: "{{ default_vpc_discovery.vpcs[0].vpc_id }}"
+        discovered_vpc_id: "{{ default_vpc_result.stdout }}"
       when: 
         - vpc_subnet_id is not defined or vpc_subnet_id == ""
-        - default_vpc_discovery.vpcs | length > 0
+        - default_vpc_result.stdout != "None"
       tags: [vpc, discovery]
 
-    - name: "Discover default subnet in default VPC"
-      amazon.aws.ec2_subnet_info:
-        region: "{{ aws_region }}"
-        filters:
-          vpc-id: "{{ discovered_vpc_id }}"
-          default-for-az: "true"
-      register: default_subnet_discovery
+    - name: "Discover default subnet using AWS CLI"
+      command: aws ec2 describe-subnets --region {{ aws_region }} --filters Name=vpc-id,Values={{ discovered_vpc_id }} Name=default-for-az,Values=true --query 'Subnets[0].SubnetId' --output text
+      register: default_subnet_result
       when: 
         - vpc_subnet_id is not defined or vpc_subnet_id == ""
         - discovered_vpc_id is defined
@@ -84,10 +77,11 @@
 
     - name: "Set discovered subnet ID"
       set_fact:
-        discovered_subnet_id: "{{ default_subnet_discovery.subnets[0].subnet_id }}"
+        discovered_subnet_id: "{{ default_subnet_result.stdout }}"
       when:
         - vpc_subnet_id is not defined or vpc_subnet_id == ""
-        - default_subnet_discovery.subnets | length > 0
+        - default_subnet_result.stdout is defined
+        - default_subnet_result.stdout != "None"
       tags: [vpc, discovery]
 
     - name: "Set final subnet ID (custom or discovered)"
@@ -95,19 +89,24 @@
         final_subnet_id: "{{ vpc_subnet_id if (vpc_subnet_id is defined and vpc_subnet_id != '') else discovered_subnet_id }}"
       tags: [vpc, discovery]
 
-    - name: "Discover or create default security group"
-      amazon.aws.ec2_security_group_info:
-        region: "{{ aws_region }}"
-        filters:
-          group-name: "default"
-          vpc-id: "{{ discovered_vpc_id if discovered_vpc_id is defined else vpc_id }}"
-      register: default_sg_discovery
-      when: aws_security_group is not defined or aws_security_group == ""
+    - name: "Discover default security group using AWS CLI"
+      command: aws ec2 describe-security-groups --region {{ aws_region }} --filters Name=group-name,Values=default Name=vpc-id,Values={{ discovered_vpc_id }} --query 'SecurityGroups[0].GroupId' --output text
+      register: default_sg_result
+      when: 
+        - aws_security_group is not defined or aws_security_group == ""
+        - discovered_vpc_id is defined
       tags: [security, discovery]
 
     - name: "Set final security group (custom or default)"
       set_fact:
-        final_security_group: "{{ aws_security_group if (aws_security_group is defined and aws_security_group != '') else default_sg_discovery.security_groups[0].group_id }}"
+        final_security_group: "{{ aws_security_group if (aws_security_group is defined and aws_security_group != '') else default_sg_result.stdout }}"
+      when: aws_security_group is not defined or aws_security_group == ""
+      tags: [security, discovery]
+
+    - name: "Set final security group to custom value"
+      set_fact:
+        final_security_group: "{{ aws_security_group }}"
+      when: aws_security_group is defined and aws_security_group != ""
       tags: [security, discovery]
 
     - name: "Display VPC and network configuration"
