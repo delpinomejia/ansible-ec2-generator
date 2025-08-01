@@ -20,6 +20,10 @@ build_configuration:
     - ls -la vars/
     - cp vars/vars_sample.yml vars/vars.yml
     - echo "Configuration prepared"
+  artifacts:
+    paths:
+      - vars/vars.yml
+    expire_in: 1 hour
   tags:
     - homelab
     - local
