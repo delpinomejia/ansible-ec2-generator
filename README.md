@@ -26,9 +26,11 @@ The **Ansible EC2 Instance Generator** is a comprehensive automation solution th
 - 🔍 **Smart AMI Discovery** - Automatically finds the latest AMI matching your criteria
 - 💰 **Cost Estimation** - Real-time cost calculations before deployment
 - 🏷️ **Comprehensive Tagging** - Enterprise-grade resource management
-- 🔔 **Slack Integration** - Optional notifications for team collaboration
+- 🔑 **Dynamic SSH Keys** - Auto-generated key pairs for enhanced security
 - 🔒 **Security First** - Built-in security best practices and encryption
-- 🧪 **CI/CD Ready** - Complete GitLab CI pipeline included
+- 🧪 **CI/CD Ready** - Complete GitLab CI pipeline with manual cleanup stage
+- 🧹 **Smart Cleanup** - Automated resource discovery and termination
+- 🛠️ **Zero Dependencies** - Uses AWS CLI instead of complex Ansible collections
 
 ---
 
