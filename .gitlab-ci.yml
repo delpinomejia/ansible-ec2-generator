@@ -29,7 +29,6 @@ cache:
 validate_all:
   stage: validate
   before_script:
-    # Use system-installed Ansible on Debian runner
     - ansible --version
     - ansible-galaxy collection install amazon.aws community.general --force
   script:
