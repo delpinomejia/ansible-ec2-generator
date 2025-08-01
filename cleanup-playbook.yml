@@ -127,7 +127,7 @@
         msg:
           - "=== Cleanup Summary ==="
           - "Instances found: {{ instances_to_cleanup.instances | length }}"
-          - "Instances terminated: {{ termination_result.instances | length if termination_result is defined else 0 }}"
+          - "Instances terminated: {{ (termination_result.instances | length) if (termination_result is defined and termination_result.instances is defined) else 0 }}"
           - "Key pairs cleaned: {{ keypairs_to_cleanup.stdout.split() | length if keypairs_to_cleanup.stdout != '' else 0 }}"
           - "Cleanup completed successfully!"
       tags: [summary, always]
@@ -144,5 +144,8 @@
           - "🔍 Verify in AWS Console that resources were properly cleaned up"
           - "💰 This should stop ongoing costs for these resources"
           - "📊 Monitor AWS Cost Explorer to confirm cost reduction"
-      when: termination_result is defined and termination_result.instances | length > 0
+      when: 
+        - termination_result is defined
+        - termination_result.instances is defined
+        - termination_result.instances | length > 0
       tags: [warning, always]
