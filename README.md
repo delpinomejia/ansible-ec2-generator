@@ -5,7 +5,7 @@
 ![Ansible](https://img.shields.io/badge/ansible-%231A1918.svg?style=for-the-badge&logo=ansible&logoColor=white)
 ![AWS](https://img.shields.io/badge/AWS-%23FF9900.svg?style=for-the-badge&logo=amazon-aws&logoColor=white)
 ![Python](https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54)
-![GitLab CI](https://img.shields.io/badge/gitlab%20ci-%23181717.svg?style=for-the-badge&logo=gitlab&logoColor=white)
+![GitHub Actions](https://img.shields.io/badge/github%20actions-%232671E5.svg?style=for-the-badge&logo=githubactions&logoColor=white)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Ansible Galaxy](https://img.shields.io/badge/Ansible-Galaxy-blue.svg)](https://galaxy.ansible.com/)
@@ -28,7 +28,7 @@ The **Ansible EC2 Instance Generator** is a comprehensive automation solution th
 - 🏷️ **Comprehensive Tagging** - Enterprise-grade resource management
 - 🔑 **Dynamic SSH Keys** - Auto-generated key pairs for enhanced security
 - 🔒 **Security First** - Built-in security best practices and encryption
-- 🧪 **CI/CD Ready** - Complete GitLab CI pipeline with manual cleanup stage
+- 🧪 **CI/CD Ready** - Complete GitHub Actions workflow with manual cleanup stage
 - 🧹 **Smart Cleanup** - Automated resource discovery and termination
 - 🛠️ **Zero Dependencies** - Uses AWS CLI instead of complex Ansible collections
 
@@ -94,7 +94,7 @@ ansible-playbook ec2-playbook.yml --tags "validation,create"
 | 🔒 **Security Scanning** | ✅ | Built-in security validations |
 | 🧪 **SSH Testing** | ✅ | Connectivity verification |
 | 📊 **Multi-Environment** | ✅ | Dev/Test/Prod configurations |
-| 🔄 **CI/CD Pipeline** | ✅ | Complete GitLab CI integration |
+| 🔄 **CI/CD Pipeline** | ✅ | Complete GitHub Actions integration |
 
 ---
 
@@ -103,10 +103,15 @@ ansible-playbook ec2-playbook.yml --tags "validation,create"
 ```
 ansible-ec2-generator/
 ├── 📄 ec2-playbook.yml      # Main Ansible playbook
+├── 📄 cleanup-playbook.yml  # Resource cleanup playbook
 ├── 📁 vars/
 │   ├── 📄 vars_sample.yml    # Configuration template
 │   └── 📄 vars.yml          # Your configuration (create this)
-├── 📄 .gitlab-ci.yml        # CI/CD pipeline
+├── 📁 .github/
+│   ├── 📁 workflows/
+│   │   └── 📄 deploy.yml     # GitHub Actions workflow
+│   ├── 📁 ISSUE_TEMPLATE/    # Issue templates
+│   └── 📄 pull_request_template.md
 ├── 📄 README.md            # This file
 └── 📄 .gitignore           # Git ignore rules
 ```
@@ -172,15 +177,28 @@ aws ec2 terminate-instances --instance-ids i-1234567890abcdef0
 
 ---
 
-## 🔄 CI/CD Pipeline
+## 🔄 GitHub Actions Workflow
 
-The included GitLab CI pipeline provides:
+The included GitHub Actions workflow provides:
 
 - 🔍 **Validation** - Syntax and YAML validation
-- 🧪 **Testing** - Ansible lint and dry-run testing
-- 🔒 **Security** - Credential and vulnerability scanning
-- 🚀 **Deployment** - Manual deployment with approval
-- 🧹 **Cleanup** - Resource cleanup guidance
+- 🧪 **Testing** - Ansible lint and dry-run testing  
+- 🏗️ **Build** - Configuration preparation with artifacts
+- 🚀 **Deploy** - Manual deployment with environment protection
+- 🧹 **Cleanup** - Automated resource cleanup with manual trigger
+
+### 🎮 How to Use
+
+1. **Automatic Validation**: Triggered on push/PR to main branch
+2. **Manual Deployment**: Go to Actions → Run workflow → Check "Deploy EC2 instance"
+3. **Manual Cleanup**: Go to Actions → Run workflow → Check "Cleanup AWS resources"
+
+### 🔐 Required Secrets
+
+Add these secrets to your GitHub repository:
+- `AWS_ACCESS_KEY_ID` - Your AWS access key
+- `AWS_SECRET_ACCESS_KEY` - Your AWS secret key  
+- `AWS_REGION` - Target AWS region (optional, defaults to us-east-1)
 
 ---
 
