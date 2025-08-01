@@ -73,8 +73,14 @@ Desktop.ini                    # Windows
 
 # CI/CD artifacts
 .gitlab-ci-artifacts/          # GitLab CI artifacts
+.github/workflows/test*.yml    # Test workflow files
 junit.xml                      # Test results
 coverage.xml                   # Coverage reports
+validation-results.log         # Validation results
+.gitlab-ci-test.yml           # GitLab CI test configs (not needed for GitHub)
+.gitlab-ci-clean.yml          # GitLab CI alternative configs (not needed for GitHub)
+*-results.log                 # Any results log files
+*test*.yml                    # Test configuration files
 
 # Security and sensitive data
 *.pem                          # Private keys

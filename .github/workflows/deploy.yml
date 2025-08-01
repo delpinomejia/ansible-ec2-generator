@@ -59,9 +59,19 @@ jobs:
       
     - name: 🔍 Ansible Lint
       run: |
-        ansible-lint ec2-playbook.yml
-        ansible-lint cleanup-playbook.yml
+        echo "Starting Ansible lint checks..." | tee validation-results.log
+        ansible-lint ec2-playbook.yml 2>&1 | tee -a validation-results.log
+        ansible-lint cleanup-playbook.yml 2>&1 | tee -a validation-results.log
+        echo "Ansible lint checks completed" | tee -a validation-results.log
       continue-on-error: true
+      
+    - name: 📤 Upload validation results
+      uses: actions/upload-artifact@v4
+      with:
+        name: validation-results
+        path: validation-results.log
+        retention-days: 7
+      if: always()
 
   build:
     name: 🏗️ Build Configuration

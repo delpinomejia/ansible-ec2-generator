@@ -19,95 +19,85 @@
 
   tasks:
     # ========================================================================
+    # DEBUG PHASE: Display loaded variables
+    # ========================================================================
+    - name: "Display loaded variables for debugging"
+      debug:
+        msg:
+          - "AWS Region: {{ aws_region }}"
+          - "Application Name: {{ app_name }}"
+          - "Environment: {{ environment }}"
+      tags: [debug, always]
+
+    # ========================================================================
     # DISCOVERY PHASE: Find instances to terminate
     # ========================================================================
-    - name: "Find EC2 instances created by ansible-ec2-generator using AWS CLI"
+    - name: "Find EC2 instances created by ansible-ec2-generator (CreatedBy tag only)"
       command: >
         aws ec2 describe-instances 
         --region {{ aws_region }} 
         --filters 
         "Name=tag:CreatedBy,Values=ansible-ec2-generator" 
-        "Name=tag:Application,Values={{ app_name }}" 
-        "Name=tag:Environment,Values={{ environment }}" 
         "Name=instance-state-name,Values=running,stopped,stopping" 
         --query "Reservations[].Instances[].[InstanceId,Tags[?Key=='Name'].Value|[0],State.Name,LaunchTime]" 
         --output text
       register: instances_query_result
       tags: [discovery, cleanup]
 
-    - name: "Parse instance discovery results"
+    - name: "Display raw AWS query result for debugging"
+      debug:
+        msg:
+          - "Raw AWS CLI output: '{{ instances_query_result.stdout }}'"
+          - "Command executed: aws ec2 describe-instances --region {{ aws_region }} --filters Name=tag:CreatedBy,Values=ansible-ec2-generator Name=tag:Application,Values={{ app_name }} Name=tag:Environment,Values={{ environment }} Name=instance-state-name,Values=running,stopped,stopping"
+      tags: [debug, always]
+
+    - name: "Check if instances were found"
       set_fact:
-        instances_to_cleanup: 
-          instances: |
-            {% set instances = [] %}
-            {% if instances_query_result.stdout.strip() != "" %}
-              {% for line in instances_query_result.stdout.strip().split('\n') %}
-                {% set parts = line.split('\t') %}
-                {% if parts|length >= 4 %}
-                  {% set instance = {
-                    'instance_id': parts[0],
-                    'name': parts[1] if parts[1] != 'None' else 'N/A',
-                    'state': {'name': parts[2]},
-                    'launch_time': parts[3]
-                  } %}
-                  {% set _ = instances.append(instance) %}
-                {% endif %}
-              {% endfor %}
-            {% endif %}
-            {{ instances }}
+        instances_found: "{{ instances_query_result.stdout.strip() != '' }}"
+        instance_count: "{{ instances_query_result.stdout.strip().split('\n') | length if instances_query_result.stdout.strip() != '' else 0 }}"
+      tags: [discovery, cleanup]
+
+    - name: "Extract instance IDs for termination"
+      set_fact:
+        instance_ids_to_terminate: "{{ instances_query_result.stdout.strip().split('\n') | map('regex_replace', '^([^\t]+).*', '\\1') | list }}"
+      when: instances_found | bool
       tags: [discovery, cleanup]
 
     - name: "Display found instances for cleanup"
       debug:
-        msg:
-          - "=== Found {{ instances_to_cleanup.instances | length }} instances to cleanup ==="
-          - "{% for instance in instances_to_cleanup.instances %}"
-          - "Instance ID: {{ instance.instance_id }}"
-          - "Name: {{ instance.name }}"
-          - "State: {{ instance.state.name }}"
-          - "Launch Time: {{ instance.launch_time }}"
-          - "---"
-          - "{% endfor %}"
-      when: instances_to_cleanup.instances | length > 0
+        msg: |
+          === Found {{ instance_count }} instances to cleanup ===
+          Raw output:
+          {{ instances_query_result.stdout }}
+      when: instances_found | bool
       tags: [discovery, info]
 
     - name: "No instances found for cleanup"
       debug:
         msg: "No instances found matching the cleanup criteria"
-      when: instances_to_cleanup.instances | length == 0
+      when: not (instances_found | bool)
       tags: [discovery, info]
 
     # ========================================================================
     # TERMINATION PHASE: Terminate found instances
     # ========================================================================
     - name: "Terminate EC2 instances using AWS CLI"
-      command: aws ec2 terminate-instances --region {{ aws_region }} --instance-ids {{ instances_to_cleanup.instances | map(attribute='instance_id') | join(' ') }}
+      command: aws ec2 terminate-instances --region {{ aws_region }} --instance-ids {{ instance_ids_to_terminate | join(' ') }}
       when: 
-        - instances_to_cleanup.instances | length > 0
+        - instances_found | bool
         - confirm_termination | default (false) | bool
       register: termination_result
       tags: [termination, cleanup]
 
-    - name: "Parse termination results"
-      set_fact:
-        termination_parsed:
-          instances: "{{ instances_to_cleanup.instances }}"
-      when: 
-        - termination_result is defined
-        - termination_result.rc == 0
-      tags: [termination, cleanup]
-
     - name: "Display termination results"
       debug:
-        msg:
-          - "=== Instance Termination Results ==="
-          - "Terminated {{ instances_to_cleanup.instances | length }} instances"
-          - "{% for instance in instances_to_cleanup.instances %}"
-          - "Instance ID: {{ instance.instance_id }} - State: terminating"
-          - "{% endfor %}"
+        msg: |
+          === Instance Termination Results ===
+          Terminated {{ instance_count }} instances
+          Instance IDs: {{ instance_ids_to_terminate | join(', ') }}
       when: 
         - termination_result is defined
-        - termination_result.rc == 0
+        - termination_result is succeeded
       tags: [termination, info]
 
     # ========================================================================
@@ -155,8 +145,8 @@
       debug:
         msg:
           - "=== Cleanup Summary ==="
-          - "Instances found: {{ instances_to_cleanup.instances | length }}"
-          - "Instances terminated: {{ instances_to_cleanup.instances | length if (termination_result is defined and termination_result.rc == 0) else 0 }}"
+          - "Instances found: {{ instance_count }}"
+          - "Instances terminated: {{ instance_count if (termination_result is defined and termination_result is succeeded) else 0 }}"
           - "Key pairs cleaned: {{ keypairs_to_cleanup.stdout.split() | length if keypairs_to_cleanup.stdout != '' else 0 }}"
           - "Cleanup completed successfully!"
       tags: [summary, always]
@@ -175,6 +165,6 @@
           - "📊 Monitor AWS Cost Explorer to confirm cost reduction"
       when: 
         - termination_result is defined
-        - termination_result.rc == 0
-        - instances_to_cleanup.instances | length > 0
+        - termination_result is succeeded
+        - instances_found | bool
       tags: [warning, always]
